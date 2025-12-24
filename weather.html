@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RealWeather Dashboard</title>
+<script>
+window.onload = function() {
+  const apiKey = "be35174a4b955e5f7df0c3820b80f84a";
+
+  // --- Body styling ---
+  Object.assign(document.body.style, {
+    margin: "0",
+    fontFamily: "system-ui",
+    background: "linear-gradient(to bottom, #4facfe, #00f2fe)",
+    height: "100vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  });
+
+  // --- Container ---
+  const container = document.createElement("div");
+  Object.assign(container.style, {
+    background: "rgba(255,255,255,0.95)",
+    padding: "20px",
+    borderRadius: "15px",
+    boxShadow: "0 0 20px rgba(0,0,0,0.2)",
+    width: "350px",
+    textAlign: "center",
+  });
+  document.body.appendChild(container);
+
+  // --- Title ---
+  const title = document.createElement("h1");
+  title.textContent = "RealWeather Dashboard";
+  container.appendChild(title);
+
+  // --- Search input ---
+  const input = document.createElement("input");
+  input.placeholder = "Enter city...";
+  Object.assign(input.style, {
+    width: "calc(100% - 20px)",
+    padding: "10px",
+    borderRadius: "8px",
+    border: "1px solid #ccc",
+    marginBottom: "5px",
+  });
+  container.appendChild(input);
+
+  // --- Suggestion list ---
+  const suggestions = document.createElement("ul");
+  Object.assign(suggestions.style, {
+    listStyle: "none",
+    padding: "0",
+    margin: "0 0 10px 0",
+    maxHeight: "100px",
+    overflowY: "auto",
+    textAlign: "left",
+  });
+  container.appendChild(suggestions);
+
+  // --- Use my location button ---
+  const locBtn = document.createElement("button");
+  locBtn.textContent = "📍 Use My Location";
+  Object.assign(locBtn.style, {
+    padding: "10px",
+    width: "100%",
+    border: "none",
+    borderRadius: "8px",
+    marginBottom: "20px",
+    background: "#00cec9",
+    color: "#fff",
+    fontSize: "1rem",
+    cursor: "pointer",
+  });
+  container.appendChild(locBtn);
+
+  // --- Weather display ---
+  const weatherDiv = document.createElement("div");
+  container.appendChild(weatherDiv);
+
+  const cityName = document.createElement("h2");
+  weatherDiv.appendChild(cityName);
+
+  const tempP = document.createElement("p");
+  tempP.style.fontSize = "2rem";
+  weatherDiv.appendChild(tempP);
+
+  const descP = document.createElement("p");
+  weatherDiv.appendChild(descP);
+
+  const iconImg = document.createElement("img");
+  iconImg.style.width = "80px";
+  iconImg.style.height = "80px";
+  weatherDiv.appendChild(iconImg);
+
+  // --- Forecast container ---
+  const forecastDiv = document.createElement("div");
+  forecastDiv.style.display = "flex";
+  forecastDiv.style.justifyContent = "space-between";
+  forecastDiv.style.marginTop = "20px";
+  container.appendChild(forecastDiv);
+
+  // --- Functions ---
+  async function fetchWeather(lat, lon, name) {
+    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`);
+    const data = await res.json();
+    cityName.textContent = name || data.name;
+    tempP.textContent = Math.round(data.main.temp) + "°C";
+    descP.textContent = data.weather[0].description;
+    iconImg.src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
+
+    // Fetch 5-day forecast
+    const forecastRes = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`);
+    const forecastData = await forecastRes.json();
+    forecastDiv.innerHTML = "";
+
+    // Pick one forecast per day (at 12:00)
+    const days = {};
+    forecastData.list.forEach(item => {
+      const date = item.dt_txt.split(" ")[0];
+      if(!days[date] && item.dt_txt.includes("12:00:00")) {
+        days[date] = item;
+      }
+    });
+
+    Object.values(days).forEach(item => {
+      const dayDiv = document.createElement("div");
+      dayDiv.style.textAlign = "center";
+      const d = new Date(item.dt * 1000);
+      const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
+      const dayP = document.createElement("p");
+      dayP.textContent = dayName;
+      const icon = document.createElement("img");
+      icon.src = `https://openweathermap.org/img/wn/${item.weather[0].icon}.png`;
+      icon.style.width = "50px";
+      icon.style.height = "50px";
+      const temp = document.createElement("p");
+      temp.textContent = Math.round(item.main.temp) + "°C";
+
+      dayDiv.appendChild(dayP);
+      dayDiv.appendChild(icon);
+      dayDiv.appendChild(temp);
+      forecastDiv.appendChild(dayDiv);
+    });
+  }
+
+  async function fetchSuggestions(query) {
+    if(!query) { suggestions.innerHTML=""; return; }
+    const res = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${query}&limit=5&appid=${apiKey}`);
+    const data = await res.json();
+    suggestions.innerHTML = "";
+    data.forEach(loc => {
+      const li = document.createElement("li");
+      li.textContent = `${loc.name}, ${loc.country}`;
+      li.style.padding = "5px";
+      li.style.cursor = "pointer";
+      li.onmouseover = () => li.style.background="#eee";
+      li.onmouseout = () => li.style.background="transparent";
+      li.onclick = () => {
+        fetchWeather(loc.lat, loc.lon, loc.name);
+        suggestions.innerHTML = "";
+        input.value = loc.name;
+      };
+      suggestions.appendChild(li);
+    });
+  }
+
+  input.addEventListener("input", (e) => fetchSuggestions(e.target.value));
+
+  locBtn.onclick = () => {
+    navigator.geolocation.getCurrentPosition(pos => {
+      fetchWeather(pos.coords.latitude, pos.coords.longitude);
+    });
+  };
+
+};
+</script>
+</head>
+</html>
