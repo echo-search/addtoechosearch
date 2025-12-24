@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Speed Test</title>
+
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    background: #0f1220;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+
+  .box {
+    background: #161a30;
+    padding: 25px;
+    border-radius: 14px;
+    width: 320px;
+    text-align: center;
+  }
+
+  h1 {
+    margin-bottom: 15px;
+  }
+
+  button {
+    background: #4f7cff;
+    border: none;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  button:hover {
+    opacity: 0.9;
+  }
+
+  .result {
+    margin-top: 15px;
+    font-size: 15px;
+  }
+</style>
+</head>
+
+<body>
+  <div class="box">
+    <h1>Speed Test</h1>
+    <button onclick="startTest()">Start Test</button>
+
+    <div class="result" id="ping">Ping: —</div>
+    <div class="result" id="download">Download: —</div>
+    <div class="result" id="upload">Upload: —</div>
+  </div>
+
+<script>
+async function startTest() {
+  document.getElementById("ping").textContent = "Ping: testing...";
+  document.getElementById("download").textContent = "Download: testing...";
+  document.getElementById("upload").textContent = "Upload: testing...";
+
+  await testPing();
+  await testDownload();
+  await testUpload();
+}
+
+async function testPing() {
+  const start = performance.now();
+  await fetch("https://www.google.com/favicon.ico", { mode: "no-cors" });
+  const end = performance.now();
+  document.getElementById("ping").textContent =
+    "Ping: " + Math.round(end - start) + " ms";
+}
+
+async function testDownload() {
+  const url = "https://speed.cloudflare.com/__down?bytes=5000000";
+  const start = performance.now();
+  const response = await fetch(url);
+  const data = await response.arrayBuffer();
+  const end = performance.now();
+
+  const bits = data.byteLength * 8;
+  const seconds = (end - start) / 1000;
+  const mbps = (bits / seconds / 1024 / 1024).toFixed(2);
+
+  document.getElementById("download").textContent =
+    "Download: " + mbps + " Mbps";
+}
+
+async function testUpload() {
+  const data = new Uint8Array(5_000_000);
+  crypto.getRandomValues(data);
+
+  const start = performance.now();
+  await fetch("https://httpbin.org/post", {
+    method: "POST",
+    body: data
+  });
+  const end = performance.now();
+
+  const bits = data.length * 8;
+  const seconds = (end - start) / 1000;
+  const mbps = (bits / seconds / 1024 / 1024).toFixed(2);
+
+  document.getElementById("upload").textContent =
+    "Upload: " + mbps + " Mbps";
+}
+</script>
+</body>
+</html>
