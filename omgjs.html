@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Visible Million-Line JavaScript</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body {
+    background:#0a0d1a;
+    color:#eaeaf0;
+    font-family:monospace;
+    padding:20px;
+  }
+  textarea {
+    width:100%;
+    height:300px;
+    background:#050713;
+    color:#9ef;
+    border:1px solid #333;
+    padding:10px;
+    margin-top:15px;
+  }
+  button {
+    padding:10px 16px;
+    background:#22c55e;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    margin-right:10px;
+  }
+</style>
+</head>
+<body>
+
+<h1>🔥 One HTML File. One Million JS Lines.</h1>
+<p>This page literally writes JavaScript into itself and runs it.</p>
+
+<button onclick="build(10000)">Generate 100k lines</button>
+<button onclick="build(100000)">Generate 1M lines</button>
+
+<div id="status"></div>
+<textarea id="jsview" spellcheck="false"></textarea>
+
+<script>
+/* =====================================
+   CORE CONTROLLER JS (VISIBLE PARENT)
+===================================== */
+
+const status = document.getElementById("status");
+const view = document.getElementById("jsview");
+
+function build(functionCount) {
+  view.value = "";
+  status.textContent = "Generating...";
+
+  let jsText = "";
+  let executed = 0;
+
+  // Each function = ~10 lines
+  for (let i = 0; i < functionCount; i++) {
+    jsText += `
+function fn_${i}() {
+  let acc = 0;
+  for (let j = 0; j < 100; j++) {
+    acc += Math.sin(j + ${i});
+  }
+  if (acc > 0) {
+    acc *= Math.cos(${i});
+  }
+  return acc;
+}
+`;
+  }
+
+  // SHOW IT (this is the key part you wanted)
+  view.value = jsText;
+
+  status.textContent =
+    "JS lines: " + (functionCount * 10).toLocaleString() +
+    " | Functions: " + functionCount.toLocaleString();
+
+  // RUN IT (safe batches)
+  const fns = [];
+  const lines = jsText.split("\n");
+  let buffer = "";
+
+  for (let line of lines) {
+    buffer += line + "\n";
+    if (line === "}") {
+      fns.push(new Function(buffer + `return fn_${fns.length}();`));
+      buffer = "";
+    }
+  }
+
+  let i = 0;
+  function runBatch() {
+    const end = Math.min(i + 200, fns.length);
+    for (; i < end; i++) {
+      fns[i]();
+      executed++;
+    }
+    if (i < fns.length) {
+      requestAnimationFrame(runBatch);
+    } else {
+      status.textContent += " | Executed: " + executed.toLocaleString();
+    }
+  }
+  runBatch();
+}
+</script>
+
+</body>
+</html>
