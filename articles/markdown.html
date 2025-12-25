@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown Page</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    body {
+      background-color: black;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      max-width: 900px;
+      margin: auto;
+    }
+    a { color: #00cec9; text-decoration: underline; }
+    pre, code { background-color: #222; padding: 0.5rem; border-radius: 4px; }
+    blockquote { border-left: 3px solid #00cec9; padding-left: 1rem; color: #ccc; }
+    ul, ol { margin-left: 2rem; }
+    .back-button {
+      display: inline-block;
+      margin-top: 40px;
+      padding: 10px 20px;
+      background-color: #00cec9;
+      color: black;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+    .back-button:hover {
+      background-color: #00b3af;
+    }
+  </style>
+</head>
+<body>
+  <div id="content"></div>
+
+  <a href="/articles/" class="back-button">‹ Back to Articles</a>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const file = params.get('file') || 'example.md';
+
+    fetch(file)
+      .then(res => res.text())
+      .then(md => {
+        document.getElementById('content').innerHTML = marked(md);
+
+        // Set page title to first H1 in Markdown
+        const firstLine = md.split('\n').find(line => line.startsWith('# '));
+        if (firstLine) document.title = firstLine.replace(/^# /, '');
+      })
+      .catch(err => {
+        document.getElementById('content').innerHTML = `<p style="color:red;">Error loading file: ${file}</p>`;
+      });
+  </script>
+</body>
+</html>
