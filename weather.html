@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather App</title>
+    <title>Ultimate Weather</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -13,6 +13,7 @@
             --accent: #38bdf8;
             --accent-hover: #0ea5e9;
             --error: #ef4444;
+            --border: #334155;
         }
 
         body {
@@ -24,270 +25,279 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            padding: 20px 0;
         }
 
         .app-container {
             background-color: var(--card-bg);
             width: 100%;
-            max-width: 380px;
+            max-width: 420px;
             padding: 2rem;
-            border-radius: 24px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-            margin: 20px;
+            border-radius: 28px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        /* Search Bar Layout */
+        /* Search Section */
         .search-wrapper {
+            position: relative;
             display: flex;
             gap: 10px;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
 
         input {
             flex: 1;
-            background: #334155;
+            background: var(--border);
             border: none;
-            padding: 12px 16px;
-            border-radius: 12px;
+            padding: 14px 18px;
+            border-radius: 14px;
             color: white;
             font-size: 1rem;
             outline: none;
-            transition: ring 0.2s;
-            min-width: 0; /* Prevents overflow */
+            min-width: 0;
         }
 
-        input:focus {
-            box-shadow: 0 0 0 2px var(--accent);
+        input:focus { box-shadow: 0 0 0 2px var(--accent); }
+
+        #suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 110px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            margin-top: 8px;
+            z-index: 100;
+            display: none;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.4);
         }
+
+        .suggestion-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .suggestion-item:hover { background: var(--border); }
 
         button {
             background: var(--accent);
             border: none;
-            border-radius: 12px;
+            border-radius: 14px;
             cursor: pointer;
-            color: #0f172a;
-            transition: background 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             padding: 0 16px;
-            font-weight: 600;
+            transition: 0.2s;
         }
 
-        button:hover { background: var(--accent-hover); }
+        button:hover { background: var(--accent-hover); transform: translateY(-1px); }
 
-        /* Icon styling for buttons */
-        .btn-icon svg {
-            width: 20px;
-            height: 20px;
-            stroke: #0f172a;
-            stroke-width: 2.5;
-            fill: none;
-        }
+        .btn-icon svg { width: 20px; height: 20px; stroke: #0f172a; stroke-width: 2.5; fill: none; }
 
-        /* Weather Display */
-        .weather-info {
-            text-align: center;
-            display: none;
-            animation: fadeIn 0.5s ease;
-        }
+        /* Main Weather */
+        .weather-info { display: none; animation: fadeIn 0.4s ease; }
 
-        .main-icon svg {
-            width: 100px;
-            height: 100px;
-            fill: none;
-            stroke: var(--accent);
-            stroke-width: 1.5;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            margin-bottom: 0.5rem;
-        }
+        .main-display { text-align: center; margin-bottom: 2rem; }
 
-        .temp {
-            font-size: 4.5rem;
-            font-weight: 700;
-            margin: 0;
-            line-height: 1;
-            letter-spacing: -2px;
-        }
+        .main-icon svg { width: 90px; height: 90px; stroke: var(--accent); stroke-width: 1.5; fill: none; }
 
-        .desc {
-            color: var(--text-muted);
-            text-transform: capitalize;
-            font-size: 1.1rem;
-            margin-top: 0.5rem;
-            margin-bottom: 2rem;
-        }
+        .temp { font-size: 5rem; font-weight: 800; margin: 0; line-height: 1; }
+        .desc { color: var(--text-muted); text-transform: capitalize; margin: 0.5rem 0 1.5rem; font-size: 1.1rem; }
 
-        .stats-grid {
+        .stats-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
-            border-top: 1px solid #334155;
-            padding-top: 1.5rem;
+            margin-bottom: 2rem;
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            border-radius: 18px;
         }
 
-        .stat-item p {
-            margin: 0;
-            font-size: 0.875rem;
-            color: var(--text-muted);
+        .stat-box p { margin: 0; font-size: 0.8rem; color: var(--text-muted); }
+        .stat-box span { font-size: 1.1rem; font-weight: 600; display: block; margin-top: 4px; }
+
+        /* Forecast Section */
+        .forecast-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        
+        .forecast-grid {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
         }
 
-        .stat-item span {
-            font-size: 1.25rem;
-            font-weight: 600;
-            display: block;
-            margin-top: 6px;
-        }
-
-        .error {
-            color: var(--error);
+        .forecast-day {
+            background: rgba(255,255,255,0.05);
+            padding: 12px 8px;
+            border-radius: 12px;
             text-align: center;
-            margin-top: 1rem;
-            display: none;
-            font-size: 0.9rem;
+            flex: 1;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .forecast-day p { margin: 0; font-size: 0.75rem; font-weight: 600; }
+        .forecast-day .day-icon svg { width: 24px; height: 24px; stroke: var(--accent); margin: 8px 0; fill: none; }
+        .forecast-day .day-temp { font-size: 0.9rem; font-weight: 700; }
+
+        .error { color: var(--error); text-align: center; margin-top: 1rem; display: none; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     <div class="search-wrapper">
-        <input type="text" id="cityInput" placeholder="Enter city..." />
+        <input type="text" id="cityInput" placeholder="Enter city..." autocomplete="off" />
+        <div id="suggestions"></div>
         
         <button onclick="getWeatherByCity()" title="Search">
-            <div class="btn-icon">
-                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            </div>
+            <div class="btn-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div>
         </button>
         
-        <button onclick="getLocation()" title="Use my location">
-            <div class="btn-icon">
-                <svg viewBox="0 0 24 24"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
-            </div>
+        <button onclick="getLocation()" title="Locate Me">
+            <div class="btn-icon"><svg viewBox="0 0 24 24"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg></div>
         </button>
     </div>
 
-    <div id="errorMsg" class="error">Location not found.</div>
+    <div id="errorMsg" class="error">City not found.</div>
 
     <div id="weatherData" class="weather-info">
-        <div class="main-icon" id="iconWrapper"></div>
-        <h2 id="cityName" style="margin:0; font-weight:500; color: white;">--</h2>
-        <h1 class="temp" id="temperature">--°</h1>
-        <p class="desc" id="description">--</p>
+        <div class="main-display">
+            <div class="main-icon" id="iconWrapper"></div>
+            <h2 id="cityName" style="margin:0; font-weight:600;">--</h2>
+            <h1 class="temp" id="temperature">--°</h1>
+            <p class="desc" id="description">--</p>
+        </div>
 
-        <div class="stats-grid">
-            <div class="stat-item">
+        <div class="stats-row">
+            <div class="stat-box">
                 <p>Humidity</p>
                 <span id="humidity">--%</span>
             </div>
-            <div class="stat-item">
+            <div class="stat-box">
                 <p>Wind Speed</p>
                 <span id="wind">-- km/h</span>
             </div>
+        </div>
+
+        <div class="forecast-section">
+            <p class="forecast-title">5-Day Forecast</p>
+            <div class="forecast-grid" id="forecastGrid">
+                </div>
         </div>
     </div>
 </div>
 
 <script>
     const apiKey = "be35174a4b955e5f7df0c3820b80f84a";
+    let debounceTimer;
 
-    // SVG Library
     const icons = {
-        sun: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`,
-        cloud: `<svg viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>`,
-        rain: `<svg viewBox="0 0 24 24"><line x1="16" y1="13" x2="16" y2="21"></line><line x1="8" y1="13" x2="8" y2="21"></line><line x1="12" y1="15" x2="12" y2="23"></line><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path></svg>`,
-        snow: `<svg viewBox="0 0 24 24"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="8" y1="20" x2="8" y2="20"></line><line x1="12" y1="18" x2="12" y2="18"></line><line x1="12" y1="22" x2="12" y2="22"></line><line x1="16" y1="16" x2="16" y2="16"></line><line x1="16" y1="20" x2="16" y2="20"></line></svg>`,
-        thunder: `<svg viewBox="0 0 24 24"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"></path><polyline points="13 11 9 17 15 17 11 23"></polyline></svg>`
+        sun: `<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`,
+        cloud: `<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>`,
+        rain: `<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16" y1="13" x2="16" y2="21"></line><line x1="8" y1="13" x2="8" y2="21"></line><line x1="12" y1="15" x2="12" y2="23"></line><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path></svg>`,
+        snow: `<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="12" y1="18" x2="12" y2="18"></line><line x1="16" y1="16" x2="16" y2="16"></line></svg>`,
+        thunder: `<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"></path><polyline points="13 11 9 17 15 17 11 23"></polyline></svg>`
     };
 
-    // 1. Get Weather by Text Input
+    function getIcon(id) {
+        if (id >= 200 && id < 300) return icons.thunder;
+        if (id >= 300 && id < 600) return icons.rain;
+        if (id >= 600 && id < 700) return icons.snow;
+        if (id === 800) return icons.sun;
+        return icons.cloud;
+    }
+
+    // --- Geocoding Suggestions ---
+    document.getElementById('cityInput').addEventListener('input', function() {
+        const query = this.value;
+        const div = document.getElementById('suggestions');
+        clearTimeout(debounceTimer);
+        if (query.length < 3) { div.style.display = 'none'; return; }
+
+        debounceTimer = setTimeout(async () => {
+            try {
+                const res = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${query}&limit=5&appid=${apiKey}`);
+                const data = await res.json();
+                div.innerHTML = data.map(c => `<div class="suggestion-item" onclick="selectCity('${c.name}','${c.country}',${c.lat},${c.lon})">${c.name}, ${c.country}</div>`).join('');
+                div.style.display = 'block';
+            } catch (e) { div.style.display = 'none'; }
+        }, 300);
+    });
+
+    function selectCity(name, country, lat, lon) {
+        document.getElementById('cityInput').value = `${name}, ${country}`;
+        document.getElementById('suggestions').style.display = 'none';
+        fetchAllWeather(lat, lon, name);
+    }
+
+    // --- Weather Fetching ---
     async function getWeatherByCity() {
         const city = document.getElementById('cityInput').value;
         if (!city) return;
-        const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
-        fetchWeather(url);
-    }
-
-    // 2. Get Weather by Geolocation
-    function getLocation() {
-        const errorDiv = document.getElementById('errorMsg');
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
-                    fetchWeather(url);
-                    // Clear input to avoid confusion
-                    document.getElementById('cityInput').value = '';
-                },
-                (err) => {
-                    showError("Unable to retrieve location. Please check permissions.");
-                }
-            );
-        } else {
-            showError("Geolocation is not supported by this browser.");
-        }
-    }
-
-    // Common Fetch Logic
-    async function fetchWeather(url) {
-        const errorDiv = document.getElementById('errorMsg');
-        const weatherDiv = document.getElementById('weatherData');
-
         try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Location not found');
-            const data = await response.json();
-            
-            updateUI(data);
-            
-            // Show UI
-            errorDiv.style.display = 'none';
-            weatherDiv.style.display = 'block';
+            const res = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=1&appid=${apiKey}`);
+            const data = await res.json();
+            if (data[0]) fetchAllWeather(data[0].lat, data[0].lon, data[0].name);
+            else showError("City not found.");
+        } catch (e) { showError("Error searching city."); }
+    }
 
-        } catch (err) {
-            showError("City not found or connection error.");
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(p => fetchAllWeather(p.coords.latitude, p.coords.longitude), () => showError("Access denied."));
         }
     }
 
-    function updateUI(data) {
-        document.getElementById('cityName').textContent = data.name;
-        document.getElementById('temperature').textContent = Math.round(data.main.temp) + '°';
-        document.getElementById('description').textContent = data.weather[0].description;
-        document.getElementById('humidity').textContent = data.main.humidity + '%';
-        document.getElementById('wind').textContent = Math.round(data.wind.speed) + ' km/h';
-
-        // Icon Logic
-        const id = data.weather[0].id;
-        const iconWrapper = document.getElementById('iconWrapper');
-        
-        if (id >= 200 && id < 300) iconWrapper.innerHTML = icons.thunder;
-        else if (id >= 300 && id < 600) iconWrapper.innerHTML = icons.rain;
-        else if (id >= 600 && id < 700) iconWrapper.innerHTML = icons.snow;
-        else if (id === 800) iconWrapper.innerHTML = icons.sun;
-        else iconWrapper.innerHTML = icons.cloud;
+    async function fetchAllWeather(lat, lon, name) {
+        try {
+            const [currRes, foreRes] = await Promise.all([
+                fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`),
+                fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`)
+            ]);
+            const current = await currRes.json();
+            const forecast = await foreRes.json();
+            updateUI(current, forecast);
+        } catch (e) { showError("Failed to fetch data."); }
     }
 
-    function showError(msg) {
-        const weatherDiv = document.getElementById('weatherData');
-        const errorDiv = document.getElementById('errorMsg');
-        weatherDiv.style.display = 'none';
-        errorDiv.textContent = msg;
-        errorDiv.style.display = 'block';
+    function updateUI(curr, fore) {
+        document.getElementById('cityName').textContent = curr.name;
+        document.getElementById('temperature').textContent = Math.round(curr.main.temp) + '°';
+        document.getElementById('description').textContent = curr.weather[0].description;
+        document.getElementById('humidity').textContent = curr.main.humidity + '%';
+        document.getElementById('wind').textContent = Math.round(curr.wind.speed) + ' km/h';
+        document.getElementById('iconWrapper').innerHTML = getIcon(curr.weather[0].id);
+
+        const grid = document.getElementById('forecastGrid');
+        grid.innerHTML = '';
+        // Filter for one reading per day (at 12:00)
+        const daily = fore.list.filter(f => f.dt_txt.includes("12:00:00")).slice(0, 5);
+        daily.forEach(day => {
+            const date = new Date(day.dt * 1000).toLocaleDateString('en', {weekday: 'short'});
+            grid.innerHTML += `
+                <div class="forecast-day">
+                    <p>${date}</p>
+                    <div class="day-icon">${getIcon(day.weather[0].id)}</div>
+                    <div class="day-temp">${Math.round(day.main.temp)}°</div>
+                </div>`;
+        });
+
+        document.getElementById('errorMsg').style.display = 'none';
+        document.getElementById('weatherData').style.display = 'block';
     }
 
-    // Enter Key Support
-    document.getElementById('cityInput').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') getWeatherByCity();
-    });
+    function showError(m) {
+        document.getElementById('weatherData').style.display = 'none';
+        document.getElementById('errorMsg').textContent = m;
+        document.getElementById('errorMsg').style.display = 'block';
+    }
+
+    document.getElementById('cityInput').addEventListener('keypress', e => e.key === 'Enter' && getWeatherByCity());
+    document.addEventListener('click', e => e.target.id !== 'cityInput' && (document.getElementById('suggestions').style.display = 'none'));
 </script>
-
 </body>
 </html>
