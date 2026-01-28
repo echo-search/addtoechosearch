@@ -1,2 +1,2 @@
 Flask
--r backend/requirements.txt
+-r test/requirements.txt
