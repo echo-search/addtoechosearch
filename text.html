@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>EchoSearch – Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Google CSE -->
+  <script async src="https://cse.google.com/cse.js?cx=8504b5117a0734987"></script>
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+      background: #fafafa;
+      color: #111;
+    }
+
+    .answer-card {
+      border-left: 4px solid #4caf50;
+      background: #f7fdf7;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+    }
+
+    .answer-card h3 {
+      margin: 0 0 6px 0;
+      font-size: 14px;
+      color: #2e7d32;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .answer-card p {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+    }
+
+    .answer-card a {
+      font-size: 14px;
+      color: #1a73e8;
+      text-decoration: none;
+    }
+
+    .gcse-search {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>EchoSearch (Test)</h1>
+
+<!-- Answer-first container -->
+<div id="answer"></div>
+
+<!-- CSE Search Box + Results -->
+<div class="gcse-search"></div>
+
+<script>
+/* ============================
+   Curated Answers JSON (INLINE)
+   ============================ */
+
+const curatedAnswers = {
+  "answers": [
+    {
+      "id": "eiffel_tower",
+      "queries": [
+        "what is the eiffel tower",
+        "eiffel tower definition",
+        "where is the eiffel tower"
+      ],
+      "url": "https://en.wikipedia.org/wiki/Eiffel_Tower",
+      "text": "The Eiffel Tower is a wrought-iron lattice tower on the Champ de Mars in Paris, France"
+    },
+    {
+      "id": "albert_einstein",
+      "queries": [
+        "who was albert einstein",
+        "albert einstein definition",
+        "albert einstein scientist"
+      ],
+      "url": "https://en.wikipedia.org/wiki/Albert_Einstein",
+      "text": "Albert Einstein was a German-born theoretical physicist who developed the theory of relativity"
+    },
+    {
+      "id": "python_language",
+      "queries": [
+        "what is python programming",
+        "python language definition",
+        "python programming language"
+      ],
+      "url": "https://en.wikipedia.org/wiki/Python_(programming_language)",
+      "text": "Python is a high-level, general-purpose programming language"
+    },
+    {
+      "id": "internet",
+      "queries": [
+        "what is the internet",
+        "internet definition",
+        "define internet"
+      ],
+      "url": "https://en.wikipedia.org/wiki/Internet",
+      "text": "The Internet is the global system of interconnected computer networks that uses the Internet protocol suite"
+    },
+    {
+      "id": "world_war_2",
+      "queries": [
+        "what was world war 2",
+        "world war ii definition",
+        "ww2"
+      ],
+      "url": "https://en.wikipedia.org/wiki/World_War_II",
+      "text": "World War II was a global war that lasted from 1939 to 1945"
+    },
+    {
+      "id": "moon",
+      "queries": [
+        "what is the moon",
+        "earth moon definition",
+        "the moon"
+      ],
+      "url": "https://en.wikipedia.org/wiki/Moon",
+      "text": "The Moon is Earth's only natural satellite"
+    },
+    {
+      "id": "gravity",
+      "queries": [
+        "what is gravity",
+        "gravity definition",
+        "define gravity"
+      ],
+      "url": "https://en.wikipedia.org/wiki/Gravity",
+      "text": "Gravity is a natural phenomenon by which all things with mass or energy are brought toward one another"
+    },
+    {
+      "id": "photosynthesis",
+      "queries": [
+        "what is photosynthesis",
+        "photosynthesis definition"
+      ],
+      "url": "https://en.wikipedia.org/wiki/Photosynthesis",
+      "text": "Photosynthesis is a process used by plants and other organisms to convert light energy into chemical energy"
+    },
+    {
+      "id": "water",
+      "queries": [
+        "what is water",
+        "water chemical definition"
+      ],
+      "url": "https://en.wikipedia.org/wiki/Water",
+      "text": "Water is an inorganic compound with the chemical formula H2O"
+    },
+    {
+      "id": "sun",
+      "queries": [
+        "what is the sun",
+        "sun definition"
+      ],
+      "url": "https://en.wikipedia.org/wiki/Sun",
+      "text": "The Sun is the star at the center of the Solar System"
+    }
+};
+
+/* ============================
+   Logic
+   ============================ */
+
+function normalize(q) {
+  return q.toLowerCase().replace(/[^\w\s]/g, '').trim();
+}
+
+function findCuratedAnswer(query) {
+  const q = normalize(query);
+
+  return curatedAnswers.answers.find(ans =>
+    ans.queries.some(alias => normalize(alias) === q)
+  );
+}
+
+function buildAnchor(url, text) {
+  return `${url}#:~:text=${encodeURIComponent(text)}`;
+}
+
+/* ============================
+   Hook into CSE searches
+   ============================ */
+
+window.__gcse = {
+  callback: function () {
+    const searchBox = document.querySelector('input.gsc-input');
+
+    if (!searchBox) return;
+
+    searchBox.addEventListener('change', () => {
+      const query = searchBox.value;
+      const match = findCuratedAnswer(query);
+      const container = document.getElementById('answer');
+
+      container.innerHTML = '';
+
+      if (match) {
+        const link = buildAnchor(match.url, match.text);
+
+        container.innerHTML = `
+          <div class="answer-card">
+            <h3>Curated answer</h3>
+            <p>${match.text}</p>
+            <a href="${link}" target="_blank" rel="noopener">
+              Jump to source
+            </a>
+          </div>
+        `;
+      }
+    });
+  }
+};
+</script>
+
+</body>
+</html>
