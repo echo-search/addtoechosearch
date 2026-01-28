@@ -1,222 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>EchoSearch – Test</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EchoSearch – CSE Live Answer</title>
 
-  <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      max-width: 900px;
-      margin: auto;
-      padding: 20px;
-      background: #fafafa;
-      color: #111;
-    }
+<style>
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+  background: #fafafa;
+  color: #111;
+}
+#answer { margin-bottom: 20px; }
+.answer-card {
+  border-left: 4px solid #4caf50;
+  background: #f6fff6;
+  padding: 14px;
+  margin-bottom: 20px;
+}
+.answer-card h3 { font-size:12px; color:#2e7d32; text-transform:uppercase; margin:0 0 6px; }
+.answer-card p { font-size:16px; margin:0 0 8px; }
+.answer-card a { font-size:14px; color:#1a73e8; text-decoration:none; }
+.gcse-search { margin-top:10px; }
+</style>
 
-    h1 {
-      margin-bottom: 10px;
-    }
-
-    .answer-card {
-      border-left: 4px solid #4caf50;
-      background: #f7fdf7;
-      padding: 14px 16px;
-      margin-bottom: 20px;
-    }
-
-    .answer-card h3 {
-      margin: 0 0 6px 0;
-      font-size: 13px;
-      color: #2e7d32;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .answer-card p {
-      margin: 0 0 8px 0;
-      font-size: 16px;
-    }
-
-    .answer-card a {
-      font-size: 14px;
-      color: #1a73e8;
-      text-decoration: none;
-    }
-  </style>
-
-  <script>
-    /* ============================
-       Curated Answers (INLINE)
-       ============================ */
-
-    const curatedAnswers = {
-      answers: [
-        {
-          id: "eiffel_tower",
-          queries: [
-            "what is the eiffel tower",
-            "eiffel tower definition",
-            "where is the eiffel tower"
-          ],
-          url: "https://en.wikipedia.org/wiki/Eiffel_Tower",
-          text: "The Eiffel Tower is a wrought-iron lattice tower on the Champ de Mars in Paris, France"
-        },
-        {
-          id: "albert_einstein",
-          queries: [
-            "who was albert einstein",
-            "albert einstein definition",
-            "albert einstein scientist"
-          ],
-          url: "https://en.wikipedia.org/wiki/Albert_Einstein",
-          text: "Albert Einstein was a German-born theoretical physicist who developed the theory of relativity"
-        },
-        {
-          id: "python_language",
-          queries: [
-            "what is python programming",
-            "python language definition",
-            "python programming language"
-          ],
-          url: "https://en.wikipedia.org/wiki/Python_(programming_language)",
-          text: "Python is a high-level, general-purpose programming language"
-        },
-        {
-          id: "internet",
-          queries: [
-            "what is the internet",
-            "internet definition",
-            "define internet"
-          ],
-          url: "https://en.wikipedia.org/wiki/Internet",
-          text: "The Internet is the global system of interconnected computer networks that uses the Internet protocol suite"
-        },
-        {
-          id: "world_war_2",
-          queries: [
-            "what was world war 2",
-            "world war ii definition",
-            "ww2"
-          ],
-          url: "https://en.wikipedia.org/wiki/World_War_II",
-          text: "World War II was a global war that lasted from 1939 to 1945"
-        },
-        {
-          id: "moon",
-          queries: [
-            "what is the moon",
-            "earth moon definition",
-            "the moon"
-          ],
-          url: "https://en.wikipedia.org/wiki/Moon",
-          text: "The Moon is Earth's only natural satellite"
-        },
-        {
-          id: "gravity",
-          queries: [
-            "what is gravity",
-            "gravity definition",
-            "define gravity"
-          ],
-          url: "https://en.wikipedia.org/wiki/Gravity",
-          text: "Gravity is a natural phenomenon by which all things with mass or energy are brought toward one another"
-        },
-        {
-          id: "photosynthesis",
-          queries: [
-            "what is photosynthesis",
-            "photosynthesis definition"
-          ],
-          url: "https://en.wikipedia.org/wiki/Photosynthesis",
-          text: "Photosynthesis is a process used by plants and other organisms to convert light energy into chemical energy"
-        },
-        {
-          id: "water",
-          queries: [
-            "what is water",
-            "water chemical definition"
-          ],
-          url: "https://en.wikipedia.org/wiki/Water",
-          text: "Water is an inorganic compound with the chemical formula H2O"
-        },
-        {
-          id: "sun",
-          queries: [
-            "what is the sun",
-            "sun definition"
-          ],
-          url: "https://en.wikipedia.org/wiki/Sun",
-          text: "The Sun is the star at the center of the Solar System"
-        }
-      ]
-    };
-
-    /* ============================
-       Logic
-       ============================ */
-
-    function normalize(q) {
-      return q.toLowerCase().replace(/[^\w\s]/g, "").trim();
-    }
-
-    function findCuratedAnswer(query) {
-      const q = normalize(query);
-      return curatedAnswers.answers.find(answer =>
-        answer.queries.some(alias => normalize(alias) === q)
-      );
-    }
-
-    function buildAnchor(url, text) {
-      return `${url}#:~:text=${encodeURIComponent(text)}`;
-    }
-
-    /* ============================
-       CSE Hook (must exist BEFORE load)
-       ============================ */
-
-    window.__gcse = {
-      callback() {
-        const attach = () => {
-          const input = document.querySelector("input.gsc-input");
-          if (!input) return setTimeout(attach, 200);
-
-          input.addEventListener("input", () => {
-            const container = document.getElementById("answer");
-            const match = findCuratedAnswer(input.value);
-            container.innerHTML = "";
-
-            if (match) {
-              container.innerHTML = `
-                <div class="answer-card">
-                  <h3>Curated answer</h3>
-                  <p>${match.text}</p>
-                  <a href="${buildAnchor(match.url, match.text)}" target="_blank" rel="noopener">
-                    Jump to source
-                  </a>
-                </div>
-              `;
-            }
-          });
-        };
-
-        attach();
-      }
-    };
-  </script>
-
-  <!-- Google CSE -->
-  <script async src="https://cse.google.com/cse.js?cx=8504b5117a0734987"></script>
+<!-- Google CSE -->
+<script async src="https://cse.google.com/cse.js?cx=8504b5117a0734987"></script>
 </head>
-
 <body>
-  <h1>EchoSearch (Test)</h1>
 
-  <!-- Answer-first -->
-  <div id="answer"></div>
+<h1>EchoSearch – CSE Live Answer</h1>
 
-  <!-- Search -->
-  <div class="gcse-search"></div>
+<div id="answer"></div>
+<div class="gcse-search"></div>
+
+<script>
+/* ============================
+   Python-like JS logic
+============================ */
+function normalize(text) {
+  return text.toLowerCase().replace(/[^\w\s]/g, "").trim();
+}
+
+function validSentence(s, query) {
+  const words = s.split(/\s+/);
+  if (words.length < 6 || words.length > 30) return false;
+  const badStarts = ["this","it","they","these","those","he","she"];
+  if (badStarts.some(b => s.toLowerCase().startsWith(b))) return false;
+  const hedges = ["may","might","often","generally","usually"];
+  if (hedges.some(h => s.toLowerCase().includes(h))) return false;
+  return normalize(s).includes(normalize(query));
+}
+
+function buildAnchor(url, text) {
+  return url + "#:~:text=" + encodeURIComponent(text);
+}
+
+function findAnswerFromCSE(query) {
+  const container = document.querySelector("div.gsc-resultsbox-visible");
+  if (!container) return null;
+  const items = Array.from(container.querySelectorAll(".gsc-webResult.gsc-result"));
+
+  // Extract snippets
+  const pages = items.map(item => {
+    const urlEl = item.querySelector(".gs-title a");
+    const snippetEl = item.querySelector(".gs-bidi-start-align");
+    return {
+      url: urlEl ? urlEl.href : "",
+      snippet: snippetEl ? snippetEl.innerText : ""
+    };
+  });
+
+  const candidates = [];
+  for (const page of pages) {
+    const sentences = page.snippet.split(/(?<=[.!?])\s+/);
+    for (const s of sentences) {
+      if (validSentence(s, query)) candidates.push({text: s.trim(), url: page.url});
+    }
+  }
+
+  const seen = new Set();
+  const unique = [];
+  for (const c of candidates) {
+    const key = normalize(c.text);
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(c);
+    }
+  }
+
+  // Multi-source confirmation
+  for (const c of unique) {
+    const count = unique.filter(o => normalize(o.text) === normalize(c.text)).length;
+    if (count >= 2) return c;
+  }
+  return null;
+}
+
+/* ============================
+   Hook into search box
+============================ */
+window.__gcse = {
+  callback: function() {
+    const input = document.querySelector("input.gsc-input");
+    if (!input) return;
+
+    input.addEventListener("keydown", e => {
+      if (e.key !== "Enter") return;
+      setTimeout(() => { // wait for CSE results to load
+        const query = input.value;
+        const container = document.getElementById("answer");
+        container.innerHTML = "";
+
+        const answer = findAnswerFromCSE(query);
+        if (answer) {
+          container.innerHTML = `
+            <div class="answer-card">
+              <h3>Answer</h3>
+              <p>${answer.text}</p>
+              <a href="${buildAnchor(answer.url, answer.text)}" target="_blank" rel="noopener">Source</a>
+            </div>
+          `;
+        }
+      }, 500); // small delay for results to appear
+    });
+  }
+};
+</script>
 </body>
 </html>
