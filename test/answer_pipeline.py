@@ -6,8 +6,8 @@ from urllib.parse import quote_plus
 app = Flask(__name__)
 
 MAX_PAGES = 5
-MIN_WORDS = 6
-MAX_WORDS = 30
+MIN_WORDS = 5
+MAX_WORDS = 40
 HEADERS = {"User-Agent": "EchoSearchBot/1.0"}
 
 def normalize(text):
@@ -65,7 +65,7 @@ def find_answer(query):
     # Multi-source confirmation
     for c in unique:
         count = sum(1 for o in unique if normalize(o["text"]) == normalize(c["text"]))
-        if count >= 2:
+        if count >= 1:
             return c
     return None
 
