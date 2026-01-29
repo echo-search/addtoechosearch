@@ -30,6 +30,7 @@ def search_web(query):
     soup = BeautifulSoup(r.text, "html.parser")
     links = [a["href"] for a in soup.select("a.result__a")[:MAX_PAGES]]
     return links
+    print("HTML length:", len(r.text))
 
 def extract_sentences(url):
     try:
