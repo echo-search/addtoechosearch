@@ -26,6 +26,25 @@ justify-content:center;
 margin-top:30px;
 }
 
+#toast{
+position:fixed;
+top:20%;
+left:50%;
+transform:translateX(-50%);
+background:#3a3a3c;
+color:white;
+padding:12px 18px;
+border-radius:6px;
+font-weight:bold;
+opacity:0;
+pointer-events:none;
+transition:opacity .3s;
+}
+
+#toast.show{
+opacity:1;
+}
+
 .tile{
 width:60px;
 height:60px;
@@ -69,11 +88,6 @@ font-size:14px;
 .key.present{ background:#b59f3b; }
 .key.absent{ background:#3a3a3c; }
 
-#message{
-margin-top:20px;
-font-size:18px;
-}
-
 button{
 margin-top:15px;
 padding:8px 14px;
@@ -96,7 +110,7 @@ Hard Mode
 
 <div id="keyboard"></div>
 
-<div id="message"></div>
+<div id="toast"></div>
 
 <button onclick="newGame()">New Game</button>
 
@@ -121,7 +135,7 @@ maxStreak:0
 
 const board=document.getElementById("board");
 const keyboard=document.getElementById("keyboard");
-const message=document.getElementById("message");
+const toast=document.getElementById("toast");
 
 function pickWord(){
 return WORDS[Math.floor(Math.random()*WORDS.length)].toUpperCase();
@@ -131,7 +145,7 @@ function newGame(){
 
 board.innerHTML="";
 keyboard.innerHTML="";
-message.textContent="";
+showToast("");
 
 WORD=pickWord();
 currentRow=0;
@@ -246,7 +260,7 @@ if(currentGuess.length!==WORD_LENGTH) return;
 const valid = await isRealWord(currentGuess);
 
 if(!valid){
-message.textContent="Not a real word";
+showToast("Not a real word");
 return;
 }
 
@@ -259,7 +273,7 @@ const prev=tiles[(currentRow-1)*WORD_LENGTH+i];
 
 if(prev && prev.classList.contains("correct") && currentGuess[i]!==prev.textContent){
 
-message.textContent="Hard mode: must reuse green letters";
+showToast("Hard mode: must reuse green letters");
 return;
 
 }
@@ -317,7 +331,7 @@ localStorage.setItem("wordleStats",JSON.stringify(stats));
 
 setTimeout(()=>{
 
-message.textContent="You win!";
+showToast("Splendid");
 
 shareGrid();
 
@@ -341,7 +355,7 @@ localStorage.setItem("wordleStats",JSON.stringify(stats));
 
 setTimeout(()=>{
 
-message.textContent="Game Over! Word was "+WORD;
+showToast("Game Over! Word was "+WORD);
 
 shareGrid();
 
@@ -395,6 +409,19 @@ const res = await fetch("https://api.datamuse.com/words?sp=" + word.toLowerCase(
 const data = await res.json();
 
 return data.length > 0 && data[0].word === word.toLowerCase();
+
+}
+
+function showToast(text){
+
+const toast=document.getElementById("toast");
+
+toast.textContent=text;
+toast.classList.add("show");
+
+setTimeout(()=>{
+toast.classList.remove("show");
+},2000);
 
 }
 </script>
