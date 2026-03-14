@@ -94,6 +94,75 @@ padding:8px 14px;
 font-size:14px;
 }
 
+#instructionsToast {
+  position: fixed;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: #121213;
+  color: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  font-weight: bold;
+  text-align: center;
+  max-width: 350px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 999;
+}
+
+#instructionsToast.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+#instructionsToast h3 {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+}
+
+#instructionsToast p {
+  margin: 6px 0;
+  font-weight: normal;
+  font-size: 14px;
+}
+
+.exampleRow {
+  display: flex;
+  justify-content: center;
+  margin: 5px 0;
+}
+
+.exampleRow .tile {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #3a3a3c;
+  margin: 0 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 18px;
+}
+
+.tile.correct { background: #538d4e; border: none; color: white; }
+.tile.present { background: #b59f3b; border: none; color: white; }
+.tile.absent { background: #3a3a3c; border: none; color: white; }
+
+#instructionsToast button {
+  margin-top: 10px;
+  padding: 6px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 6px;
+  background: #818384;
+  color: white;
+  border: none;
+}
 </style>
 </head>
 
@@ -113,6 +182,40 @@ Hard Mode
 <div id="toast"></div>
 
 <button onclick="newGame()">New Game</button>
+
+<div id="instructionsToast" class="toast" style="opacity:0;">
+  <h3>How to play</h3>
+  <p>Guess the <strong>WORDLE</strong> in 6 tries.</p>
+
+  <div class="exampleRow">
+    <div class="tile correct">W</div>
+    <div class="tile">E</div>
+    <div class="tile">A</div>
+    <div class="tile">R</div>
+    <div class="tile">Y</div>
+  </div>
+  <p><strong>W</strong> is in the word and in the correct spot.</p>
+
+  <div class="exampleRow">
+    <div class="tile">P</div>
+    <div class="tile present">I</div>
+    <div class="tile">L</div>
+    <div class="tile">L</div>
+    <div class="tile">S</div>
+  </div>
+  <p><strong>I</strong> is in the word but in the wrong spot.</p>
+
+  <div class="exampleRow">
+    <div class="tile">V</div>
+    <div class="tile">A</div>
+    <div class="tile">G</div>
+    <div class="tile absent">U</div>
+    <div class="tile">E</div>
+  </div>
+  <p><strong>U</strong> is not in the word in any spot.</p>
+
+  <button id="closeInstructionsToast">Got it!</button>
+</div>
 
 <script>
 
@@ -424,6 +527,19 @@ toast.classList.remove("show");
 },2000);
 
 }
+
+window.addEventListener("load", () => {
+  if(!localStorage.getItem("seenInstructions")){
+    const toast = document.getElementById("instructionsToast");
+    toast.classList.add("show");
+  }
+});
+
+document.getElementById("closeInstructionsToast").onclick = () => {
+  const toast = document.getElementById("instructionsToast");
+  toast.classList.remove("show");
+  localStorage.setItem("seenInstructions", "true");
+};
 </script>
 
 </body>
