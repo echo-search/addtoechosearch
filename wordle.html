@@ -238,10 +238,17 @@ k.className="key absent";
 
 }
 
-function submitGuess(){
+async function submitGuess(){
 
 if(gameOver) return;
 if(currentGuess.length!==WORD_LENGTH) return;
+
+const valid = await isRealWord(currentGuess);
+
+if(!valid){
+message.textContent="Not a real word";
+return;
+}
 
 if(document.getElementById("hardMode").checked){
 
@@ -382,6 +389,14 @@ else if(/^[A-Z]$/.test(key)) press(key);
 
 newGame();
 
+async function isRealWord(word){
+
+const res = await fetch("https://api.datamuse.com/words?sp=" + word.toLowerCase() + "&max=1");
+const data = await res.json();
+
+return data.length > 0 && data[0].word === word.toLowerCase();
+
+}
 </script>
 
 </body>
