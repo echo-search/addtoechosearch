@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Free CSE Summarizer with Links</title>
+<style>
+body { font-family: Arial; max-width: 700px; margin: auto; padding: 20px; }
+textarea { width: 100%; height: 50px; }
+button { margin: 10px 0; padding: 10px 20px; }
+#summary { margin-top: 20px; background: #f0f0f0; padding: 15px; border-radius: 5px; line-height: 1.5; }
+#results { margin-top: 20px; font-size: 14px; color: #555; }
+a { color: #0077cc; text-decoration: none; }
+a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<h2>Free CSE Top 5 Summarizer</h2>
+<textarea id="question">When was King Charles III born?</textarea>
+<br>
+<button onclick="fetchAndSummarize()">Fetch & Summarize</button>
+
+<div id="summary">Summary will appear here...</div>
+<div id="results"></div>
+
+<script>
+const CX = "8504b5117a0734987"; // Your CSE ID
+
+async function fetchAndSummarize() {
+    const query = document.getElementById("question").value;
+    const resultsDiv = document.getElementById("results");
+    const summaryDiv = document.getElementById("summary");
+
+    resultsDiv.innerText = "Fetching top 5 results...";
+    summaryDiv.innerText = "Summarizing...";
+
+    try {
+        // Use JSONP to bypass CORS
+        const url = `https://www.googleapis.com/customsearch/v1?cx=${CX}&q=${encodeURIComponent(query)}&num=5&callback=handleCSE`;
+        const script = document.createElement('script');
+        script.src = url;
+        document.body.appendChild(script);
+
+        window.handleCSE = function(data) {
+            document.body.removeChild(script);
+            if (!data.items) {
+                summaryDiv.innerText = "No results found.";
+                resultsDiv.innerText = "";
+                return;
+            }
+
+            // Extract snippets with links
+            const sources = data.items.map(item => ({
+                text: item.snippet,
+                link: item.link,
+                title: item.title
+            }));
+
+            resultsDiv.innerHTML = "<b>Top 5 sources:</b><br>" + sources.map(s => 
+                `<a href="${s.link}" target="_blank">${s.title}</a><br>${s.text}`
+            ).join("<br><br>");
+
+            // Extractive summarization
+            let text = sources.map(s => s.text).join(" ");
+            let sentences = text.match(/[^\.!\?]+[\.!\?]+/g) || [];
+            
+            // Deduplicate sentences
+            sentences = [...new Set(sentences.map(s => s.trim()))];
+
+            const wordCounts = {};
+            const stopwords = ["the","is","of","and","a","his","was","in","on","after","before","her","he","to","for","with","as","by","an"];
+
+            sentences.forEach(s => {
+                s.toLowerCase().split(/\W+/).forEach(w => {
+                    if (w && !stopwords.includes(w)) wordCounts[w] = (wordCounts[w] || 0) + 1;
+                });
+            });
+
+            const scored = sentences.map(s => {
+                let score = 0;
+                s.toLowerCase().split(/\W+/).forEach(w => { if (wordCounts[w]) score += wordCounts[w]; });
+                return {sentence: s, score};
+            });
+
+            scored.sort((a,b)=>b.score-a.score);
+            const topSentences = scored.slice(0,3).map(s => s.sentence);
+
+            // Clean and merge sentences for readability
+            const summary = topSentences.join(" ").replace(/\s+/g,' ').trim();
+            summaryDiv.innerText = summary;
+        }
+    } catch (e) {
+        summaryDiv.innerText = "Error fetching results: " + e;
+        resultsDiv.innerText = "";
+    }
+}
+</script>
+</body>
+</html>
