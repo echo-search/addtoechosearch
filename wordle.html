@@ -614,8 +614,38 @@ grid+="\n";
 
 }
 
-navigator.clipboard.writeText(grid);
+const text = "Wordle Result:\n\n" + grid;
 
+// Use native share if available
+if(navigator.share){
+navigator.share({
+title: "Wordle Unlimited",
+text: text
+}).catch(()=>{});
+}else{
+// fallback to clipboard
+if(navigator.clipboard && window.isSecureContext){
+navigator.clipboard.writeText(text);
+showToast("Copied to clipboard");
+}else{
+fallbackCopy(text);
+}
+}
+
+}
+
+function fallbackCopy(text){
+const textarea=document.createElement("textarea");
+textarea.value=text;
+document.body.appendChild(textarea);
+textarea.select();
+try{
+document.execCommand("copy");
+showToast("Copied to clipboard");
+}catch{
+showToast("Copy failed");
+}
+document.body.removeChild(textarea);
 }
 
 document.addEventListener("keydown",e=>{
