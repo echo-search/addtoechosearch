@@ -614,7 +614,12 @@ grid+="\n";
 
 }
 
-const text = "Wordle Result:\n\n" + grid;
+const text = 
+"Wordle Unlimited\n" +
+(currentGuess===WORD ? (currentRow+1)+"/6" : "X/6") +
+"\n\n" +
+grid +
+"\nPlay now → https://echo-search.github.io/addtoechosearch/wordle";
 
 // Use native share if available
 if(navigator.share){
