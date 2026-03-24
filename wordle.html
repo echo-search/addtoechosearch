@@ -225,6 +225,61 @@ margin-top:15px;
 display:flex;
 justify-content:space-between;
 }
+
+
+
+/* ========================================================= */
+/* ====================== ADDED BOT POPUP ================== */
+/* ========================================================= */
+
+#botPopup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: .3s;
+  z-index: 999999;
+}
+
+#botPopup.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#botCard {
+  background: #121213;
+  padding: 25px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 420px;
+  text-align: left;
+  color: white;
+  position: relative;
+}
+
+#closeBot {
+  position: absolute;
+  right: 20px;
+  top: 15px;
+  cursor: pointer;
+  font-size: 22px;
+}
+
+
+
+/* ========================================================= */
+/* ====================== ADDED BADGES ====================== */
+/* ========================================================= */
+
+#badgesArea div {
+  margin: 6px 0;
+  font-size: 16px;
+}
+
 </style>
 </head>
 
@@ -290,12 +345,29 @@ Hard Mode
 </div>
 <h3>GUESS DISTRIBUTION</h3>
 <div id="guessBars"></div>
+
+<!-- ====================== ADDED BADGES SECTION ====================== -->
+<h3 id="badgesHeader" style="display:none;">BADGES</h3>
+<div id="badgesArea"></div>
+
 <div id="statsButtons">
 <button onclick="location.reload()">PLAY AGAIN</button>
 <button onclick="shareGrid()">SHARE</button>
 </div>
 </div>
 </div>
+
+
+<!-- ====================== ADDED BOT POPUP ====================== -->
+<div id="botPopup">
+  <div id="botCard">
+    <span id="closeBot">✕</span>
+    <h2>WORDLE BOT</h2>
+    <div id="botText"></div>
+  </div>
+</div>
+
+
 
 <script>
 
@@ -699,6 +771,132 @@ document.getElementById("closeInstructionsToast").onclick = () => {
   toast.classList.remove("show");
   localStorage.setItem("seenInstructions", "true");
 };
+
+let badges = JSON.parse(localStorage.getItem("wordleBadges")) || {};
+
+function awardBadge(name, emoji) {
+  if (!badges[name]) {
+    badges[name] = emoji;
+    localStorage.setItem("wordleBadges", JSON.stringify(badges));
+  }
+}
+
+function updateBadgesUI() {
+  const area = document.getElementById("badgesArea");
+  const header = document.getElementById("badgesHeader");
+
+  area.innerHTML = "";
+
+  const keys = Object.entries(badges);
+
+  if (keys.length === 0) {
+    header.style.display = "none";
+    area.style.display = "none";
+    return;
+  }
+
+  header.style.display = "block";
+  area.style.display = "block";
+
+  keys.forEach(([name, emoji]) => {
+    const div = document.createElement("div");
+    div.textContent = `${emoji} ${name}`;
+    area.appendChild(div);
+  });
+}
+
+
+
+/* ============================================================= */
+/* ===================== ADDED: WORDLE BOT ===================== */
+/* ============================================================= */
+
+
+function matchPattern(word, guess, solution) {
+  for (let i = 0; i < 5; i++) {
+    if (guess[i] === solution[i] && word[i] !== guess[i]) return false;
+    if (solution.includes(guess[i]) && !word.includes(guess[i])) return false;
+  }
+  return true;
+}
+
+function wordleBotAnalysis(guesses, solution) {
+  let remaining = WORDS.map(w => w.toUpperCase());
+  let log = [];
+
+  guesses.forEach((guess, index) => {
+    const before = remaining.length;
+    remaining = remaining.filter(w => matchPattern(w, guess, solution));
+    const after = remaining.length;
+
+    log.push(
+`Guess ${index+1}: ${guess}
+Eliminated **${before - after}** words
+Remaining: **${after}**`
+    );
+  });
+
+  const rating = remaining.length < 3 ? "A+" : remaining.length < 10 ? "A" : "B";
+
+  log.push(`Final Rating: **${rating}**`);
+
+  return log.join("\n\n");
+}
+
+function showBotPopup(text) {
+  const box = document.getElementById("botPopup");
+  document.getElementById("botText").innerHTML = text.replace(/\n/g, "<br>");
+  box.classList.add("show");
+}
+
+document.getElementById("closeBot").onclick = () => {
+  document.getElementById("botPopup").classList.remove("show");
+};
+
+
+
+
+/* ============================================================= */
+/* ========== HOOK INTO YOUR EXISTING END-GAME HANDLING ========= */
+/* ============================================================= */
+
+const originalShowStatsPopup = showStatsPopup;
+
+showStatsPopup = function(win) {
+
+  originalShowStatsPopup(win);
+
+  updateBadgesUI();
+
+  // Award badges
+  if (win && currentRow === 0) awardBadge("Perfect Game", "🎯");
+  if (win && currentRow === 1) awardBadge("Speed Solver", "⚡");
+  if (win && stats.streak >= 10) awardBadge("Streak Master", "🟩");
+
+  // Setup bot analysis
+  setTimeout(() => {
+    const tiles = document.querySelectorAll(".tile");
+    const guesses = [];
+
+    for (let r = 0; r <= currentRow; r++) {
+      let g = "";
+      for (let c = 0; c < 5; c++) {
+        g += tiles[r*5 + c].textContent;
+      }
+      guesses.push(g);
+    }
+
+    const analysis = wordleBotAnalysis(guesses, WORD);
+
+    if (analysis.includes("Eliminated 200"))
+      awardBadge("Genius Guess", "🧠");
+
+    showBotPopup(analysis);
+
+  }, 2000);
+};
+
+
 </script>
 
 </body>
