@@ -2,39 +2,58 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Auto Copy File Content</title>
+  <title>File Viewer + Copy</title>
+  <style>
+    textarea {
+      width: 100%;
+      height: 300px;
+      margin-top: 10px;
+      font-family: monospace;
+    }
+    #copyBtn {
+      display: none;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
-  <h2>Select a file to auto-copy its contents</h2>
+
+  <h2>Upload a file to view & copy its content</h2>
 
   <input type="file" id="fileInput" />
-
-  <p id="status"></p>
+  <textarea id="viewer" placeholder="File content will appear here..." readonly></textarea>
+  <button id="copyBtn">Copy to Clipboard</button>
 
   <script>
-    const input = document.getElementById("fileInput");
-    const status = document.getElementById("status");
+    const fileInput = document.getElementById("fileInput");
+    const viewer = document.getElementById("viewer");
+    const copyBtn = document.getElementById("copyBtn");
 
-    input.addEventListener("change", async () => {
-      const file = input.files[0];
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files[0];
       if (!file) return;
 
       const reader = new FileReader();
 
-      reader.onload = async (e) => {
-        const text = e.target.result;
-
-        try {
-          await navigator.clipboard.writeText(text);
-          status.textContent = "Content copied to clipboard!";
-        } catch (err) {
-          status.textContent = "Failed to copy. Browser blocked clipboard.";
-        }
+      reader.onload = (e) => {
+        viewer.value = e.target.result;
+        copyBtn.style.display = "block"; // show button
       };
 
-      // Read file as text
+      // Read ANY size file as text
       reader.readAsText(file);
     });
+
+    copyBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(viewer.value);
+        copyBtn.textContent = "Copied!";
+        setTimeout(() => (copyBtn.textContent = "Copy to Clipboard"), 1500);
+      } catch {
+        alert("Failed to copy (browser blocked clipboard).");
+      }
+    });
   </script>
+
 </body>
 </html>
