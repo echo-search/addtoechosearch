@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Auto Copy File Content</title>
+</head>
+<body>
+  <h2>Select a file to auto-copy its contents</h2>
+
+  <input type="file" id="fileInput" />
+
+  <p id="status"></p>
+
+  <script>
+    const input = document.getElementById("fileInput");
+    const status = document.getElementById("status");
+
+    input.addEventListener("change", async () => {
+      const file = input.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = async (e) => {
+        const text = e.target.result;
+
+        try {
+          await navigator.clipboard.writeText(text);
+          status.textContent = "Content copied to clipboard!";
+        } catch (err) {
+          status.textContent = "Failed to copy. Browser blocked clipboard.";
+        }
+      };
+
+      // Read file as text
+      reader.readAsText(file);
+    });
+  </script>
+</body>
+</html>
