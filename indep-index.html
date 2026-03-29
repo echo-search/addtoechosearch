@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EchoSearch UL</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
+  header { background: #b8860b; color: white; padding: 1rem; text-align: center; }
+  main { padding: 2rem; max-width: 900px; margin: auto; }
+  .search-container { display: flex; gap: .5rem; margin-bottom: 1rem; }
+  input[type="text"] { flex: 1; padding: .6rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 4px; }
+  button { padding: .6rem 1rem; font-size: 1rem; background: #b8860b; color: white; border: none; border-radius: 4px; cursor: pointer; }
+  button:hover { background: #996d07; }
+  .result { background: white; padding: 1rem; margin-bottom: 1rem; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .result a { font-weight: bold; color: #b8860b; text-decoration: none; }
+  .result a:hover { text-decoration: underline; }
+  .description { margin-top: .5rem; color: #555; font-size: .95rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>EchoSearch 🔎</h1>
+  <p>Powered by EchoSearch API</p>
+</header>
+
+<main>
+  <div class="search-container">
+    <input type="text" id="query" placeholder="Search anything...">
+    <button onclick="search()">Search</button>
+  </div>
+
+  <div id="results"></div>
+</main>
+
+<script>
+  // ✨ YOUR FastAPI search endpoint
+  const API_URL = "https://psychic-pancake-jjg4rxgqpjx9fj6q6-8000.app.github.dev/search";
+
+  async function search() {
+    const q = document.getElementById('query').value.trim();
+    if (!q) {
+      document.getElementById('results').innerHTML = "<p>Please enter a search query.</p>";
+      return;
+    }
+
+    document.getElementById('results').innerHTML = "<p>Searching...</p>";
+
+    try {
+      const res = await fetch(`${API_URL}?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+
+      if (!data.results || data.results.length === 0) {
+        document.getElementById('results').innerHTML = "<p>No results found 😢</p>";
+        return;
+      }
+
+      document.getElementById('results').innerHTML = data.results.map(item => `
+        <div class="result">
+          <a href="${item.url}" target="_blank">${item.title || item.url}</a>
+          <div class="description">${item.description || ""}</div>
+        </div>
+      `).join("");
+    } catch (err) {
+      document.getElementById('results').innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+      console.error(err);
+    }
+  }
+
+  // allow pressing Enter to search
+  document.getElementById('query').addEventListener("keydown", (e) => {
+    if (e.key === "Enter") search();
+  });
+</script>
+
+</body>
+</html>
