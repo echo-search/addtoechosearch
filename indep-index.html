@@ -1,78 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EchoSearch UL</title>
-<style>
-  body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
-  header { background: #b8860b; color: white; padding: 1rem; text-align: center; }
-  main { padding: 2rem; max-width: 900px; margin: auto; }
-  .search-container { display: flex; gap: .5rem; margin-bottom: 1rem; }
-  input[type="text"] { flex: 1; padding: .6rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 4px; }
-  button { padding: .6rem 1rem; font-size: 1rem; background: #b8860b; color: white; border: none; border-radius: 4px; cursor: pointer; }
-  button:hover { background: #996d07; }
-  .result { background: white; padding: 1rem; margin-bottom: 1rem; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-  .result a { font-weight: bold; color: #b8860b; text-decoration: none; }
-  .result a:hover { text-decoration: underline; }
-  .description { margin-top: .5rem; color: #555; font-size: .95rem; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EchoSearch</title>
+
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #fafafa;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 80px;
+    }
+
+    h1 {
+      font-size: 48px;
+      margin-bottom: 30px;
+      color: #b8860b;
+      font-weight: 700;
+    }
+
+    #searchBox {
+      width: 600px;
+      max-width: 90%;
+      padding: 14px 20px;
+      font-size: 18px;
+      border: 2px solid #ddd;
+      border-radius: 30px;
+      outline: none;
+      transition: 0.25s;
+    }
+
+    #searchBox:focus {
+      border-color: #b8860b;
+      box-shadow: 0 0 8px rgba(184, 134, 11, 0.4);
+    }
+
+    #results {
+      margin-top: 40px;
+      width: 600px;
+      max-width: 90%;
+    }
+
+    .result {
+      background: white;
+      padding: 18px;
+      margin-bottom: 16px;
+      border-radius: 12px;
+      border: 1px solid #eee;
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: #333;
+    }
+
+    .url {
+      font-size: 14px;
+      color: #0066cc;
+      margin-bottom: 8px;
+      word-break: break-all;
+    }
+
+    .snippet {
+      font-size: 15px;
+      color: #444;
+    }
+  </style>
 </head>
+
 <body>
+  <h1>EchoSearch</h1>
 
-<header>
-  <h1>EchoSearch 🔎</h1>
-  <p>Powered by EchoSearch API</p>
-</header>
-
-<main>
-  <div class="search-container">
-    <input type="text" id="query" placeholder="Search anything...">
-    <button onclick="search()">Search</button>
-  </div>
+  <input 
+    id="searchBox" 
+    type="text" 
+    placeholder="Search the web..." 
+    onkeydown="if(event.key === 'Enter') search()"
+  />
 
   <div id="results"></div>
-</main>
 
-<script>
-  // ✨ YOUR FastAPI search endpoint
-  const API_URL = "https://psychic-pancake-jjg4rxgqpjx9fj6q6-8000.app.github.dev/search";
+  <script>
+    async function search() {
+      const query = document.getElementById("searchBox").value.trim();
+      const container = document.getElementById("results");
 
-  async function search() {
-    const q = document.getElementById('query').value.trim();
-    if (!q) {
-      document.getElementById('results').innerHTML = "<p>Please enter a search query.</p>";
-      return;
-    }
+      container.innerHTML = "Searching...";
 
-    document.getElementById('results').innerHTML = "<p>Searching...</p>";
+      try {
+        const url = "https://echo-search-index.onrender.com/search?q=" + encodeURIComponent(query);
 
-    try {
-      const res = await fetch(`${API_URL}?q=${encodeURIComponent(q)}`);
-      const data = await res.json();
+        const response = await fetch(url);
+        const data = await response.json();
 
-      if (!data.results || data.results.length === 0) {
-        document.getElementById('results').innerHTML = "<p>No results found 😢</p>";
-        return;
+        container.innerHTML = "";
+
+        if (!data.results || data.results.length === 0) {
+          container.innerHTML = "<p>No results found.</p>";
+          return;
+        }
+
+        data.results.forEach(item => {
+          const div = document.createElement("div");
+          div.className = "result";
+
+          div.innerHTML = `
+            <div class="title">${item.title || "Untitled"}</div>
+            <div class="url">${item.url}</div>
+            <div class="snippet">${item.description || ""}</div>
+          `;
+
+          container.appendChild(div);
+        });
+
+      } catch (err) {
+        container.innerHTML = "Error connecting to server.";
       }
-
-      document.getElementById('results').innerHTML = data.results.map(item => `
-        <div class="result">
-          <a href="${item.url}" target="_blank">${item.title || item.url}</a>
-          <div class="description">${item.description || ""}</div>
-        </div>
-      `).join("");
-    } catch (err) {
-      document.getElementById('results').innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
-      console.error(err);
     }
-  }
-
-  // allow pressing Enter to search
-  document.getElementById('query').addEventListener("keydown", (e) => {
-    if (e.key === "Enter") search();
-  });
-</script>
-
+  </script>
 </body>
 </html>
