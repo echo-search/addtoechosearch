@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audio to Base64 Converter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: #f0f0f0;
+      color: #333;
+    }
+    input, button, textarea {
+      display: block;
+      margin: 10px 0;
+      width: 100%;
+    }
+    textarea {
+      height: 200px;
+      resize: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Audio to Base64 Converter</h1>
+  <input type="file" id="audioInput" accept="audio/*">
+  <button id="convertBtn">Convert to Base64</button>
+  <textarea id="base64Output" placeholder="Base64 output will appear here..."></textarea>
+
+  <script>
+    const audioInput = document.getElementById('audioInput');
+    const convertBtn = document.getElementById('convertBtn');
+    const base64Output = document.getElementById('base64Output');
+
+    convertBtn.addEventListener('click', () => {
+      const file = audioInput.files[0];
+      if (!file) {
+        alert('Please select an audio file first!');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const base64String = event.target.result.split(',')[1];
+        base64Output.value = base64String;
+      };
+      reader.readAsDataURL(file);
+    });
+  </script>
+</body>
+</html>
