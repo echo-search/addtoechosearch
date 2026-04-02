@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Girl Gang Audio Editor - Basic</title>
+<script src="https://unpkg.com/wavesurfer.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; background: #f4f4f4; margin:0; padding:0;}
+  header { background: #ff6f91; color: #fff; text-align: center; padding: 1rem;}
+  .editor { display: flex; flex-direction: column; align-items: center; padding: 1rem; }
+  #waveform { width: 90%; height: 200px; margin: 1rem 0; border:1px solid #ccc; }
+  .controls { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
+  .controls button { padding: 0.5rem 1rem; border-radius: 5px; border: none; cursor: pointer; background: #ff6f91; color: #fff; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Girl Gang Audio Editor 🎵</h1>
+</header>
+
+<div class="editor">
+  <input type="file" id="audioFile" accept=".mp3,.wav">
+  <div id="waveform"></div>
+
+  <div class="controls">
+    <button onclick="playAudio()">Play</button>
+    <button onclick="pauseAudio()">Pause</button>
+    <button onclick="stopAudio()">Stop</button>
+    <button onclick="deleteHighlight()">Delete Highlight</button>
+    <button onclick="keepHighlight()">Keep Highlight Only</button>
+    <button onclick="reverseSelection()">Reverse</button>
+    <button onclick="fadeIn()">Fade In</button>
+    <button onclick="fadeOut()">Fade Out</button>
+    <button onclick="speedUp()">Speed +</button>
+    <button onclick="speedDown()">Speed -</button>
+    <button onclick="normalizeAudio()">Normalize</button>
+  </div>
+</div>
+
+<script>
+let wavesurfer = WaveSurfer.create({
+    container: '#waveform',
+    waveColor: '#6f9fff',
+    progressColor: '#ff6f91',
+    cursorColor: '#fff',
+    height: 150,
+    normalize: true,
+    backend: 'WebAudio'
+});
+
+let region = null;
+
+// Load audio file
+document.getElementById('audioFile').addEventListener('change', function(e){
+    if(e.target.files.length){
+        const file = e.target.files[0];
+        const url = URL.createObjectURL(file);
+        wavesurfer.load(url);
+    }
+});
+
+// Add region selection
+wavesurfer.on('ready', function(){
+    if(region) region.remove();
+    region = wavesurfer.addRegion({
+        start: 0,
+        end: wavesurfer.getDuration(),
+        color: 'rgba(255,111,145,0.3)'
+    });
+});
+
+// Play/pause/stop
+function playAudio(){ wavesurfer.play(); }
+function pauseAudio(){ wavesurfer.pause(); }
+function stopAudio(){ wavesurfer.stop(); }
+
+// Delete highlighted region
+function deleteHighlight(){
+    if(!region) return alert('Select a region first!');
+    const start = region.start;
+    const end = region.end;
+    const buffer = wavesurfer.backend.buffer;
+    const rate = buffer.sampleRate;
+
+    const left = buffer.getChannelData(0).slice(0, Math.floor(start*rate));
+    const right = buffer.getChannelData(0).slice(Math.floor(end*rate));
+
+    const newData = new Float32Array(left.length + right.length);
+    newData.set(left,0);
+    newData.set(right,left.length);
+
+    const newBuffer = wavesurfer.backend.ac.createBuffer(1, newData.length, rate);
+    newBuffer.copyToChannel(newData,0);
+    wavesurfer.loadDecodedBuffer(newBuffer);
+}
+
+// Keep only highlighted region
+function keepHighlight(){
+    if(!region) return alert('Select a region first!');
+    const start = region.start;
+    const end = region.end;
+    const buffer = wavesurfer.backend.buffer;
+    const rate = buffer.sampleRate;
+
+    const selection = buffer.getChannelData(0).slice(Math.floor(start*rate), Math.floor(end*rate));
+    const newBuffer = wavesurfer.backend.ac.createBuffer(1, selection.length, rate);
+    newBuffer.copyToChannel(selection,0);
+    wavesurfer.loadDecodedBuffer(newBuffer);
+}
+
+// Reverse highlighted region
+function reverseSelection(){
+    if(!region) return alert('Select a region first!');
+    const start = region.start;
+    const end = region.end;
+    const buffer = wavesurfer.backend.buffer;
+    const rate = buffer.sampleRate;
+
+    const fullData = buffer.getChannelData(0);
+    const s = Math.floor(start*rate);
+    const e = Math.floor(end*rate);
+
+    const segment = fullData.slice(s,e).reverse();
+    fullData.set(segment,s);
+
+    const newBuffer = wavesurfer.backend.ac.createBuffer(1, fullData.length, rate);
+    newBuffer.copyToChannel(fullData,0);
+    wavesurfer.loadDecodedBuffer(newBuffer);
+}
+
+// Fade in highlighted region
+function fadeIn(){
+    if(!region) return alert('Select a region first!');
+    const start = region.start;
+    const end = region.end;
+    const buffer = wavesurfer.backend.buffer;
+    const rate = buffer.sampleRate;
+
+    const data = buffer.getChannelData(0);
+    const s = Math.floor(start*rate);
+    const e = Math.floor(end*rate);
+
+    for(let i=s;i<e;i++){
+        const fade = (i-s)/(e-s);
+        data[i] *= fade;
+    }
+
+    const newBuffer = wavesurfer.backend.ac.createBuffer(1, data.length, rate);
+    newBuffer.copyToChannel(data,0);
+    wavesurfer.loadDecodedBuffer(newBuffer);
+}
+
+// Fade out highlighted region
+function fadeOut(){
+    if(!region) return alert('Select a region first!');
+    const start = region.start;
+    const end = region.end;
+    const buffer = wavesurfer.backend.buffer;
+    const rate = buffer.sampleRate;
+
+    const data = buffer.getChannelData(0);
+    const s = Math.floor(start*rate);
+    const e = Math.floor(end*rate);
+
+    for(let i=s;i<e;i++){
+        const fade = 1 - (i-s)/(e-s);
+        data[i] *= fade;
+    }
+
+    const newBuffer = wavesurfer.backend.ac.createBuffer(1, data.length, rate);
+    newBuffer.copyToChannel(data,0);
+    wavesurfer.loadDecodedBuffer(newBuffer);
+}
+
+// Speed change
+function speedUp(){ wavesurfer.setPlaybackRate(wavesurfer.getPlaybackRate()+0.1); }
+function speedDown(){ wavesurfer.setPlaybackRate(wavesurfer.getPlaybackRate()-0.1); }
+
+// Normalize audio
+function normalizeAudio(){
+    const buffer = wavesurfer.backend.buffer;
+    const data = buffer.getChannelData(0);
+    let max = 0;
+    for(let i=0;i<data.length;i++){ max = Math.max(max, Math.abs(data[i])); }
+    if(max===0) return;
+    for(let i=0;i<data.length;i++){ data[i] /= max; }
+
+    const newBuffer = wavesurfer.backend.ac.createBuffer(1, data.length, buffer.sampleRate);
+    newBuffer.copyToChannel(data,0);
+    wavesurfer.loadDecodedBuffer(newBuffer);
+}
+</script>
+
+</body>
+</html>
