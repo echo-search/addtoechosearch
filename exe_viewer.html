@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>EXE Viewer/Editor</title>
+<style>
+    body { font-family: monospace; padding: 20px; }
+    textarea { width: 100%; height: 400px; font-family: monospace; }
+    #downloadBtn { margin-top: 10px; padding: 10px; }
+</style>
+</head>
+<body>
+
+<h2>EXE File Viewer & Editor (Hex Mode)</h2>
+
+<input type="file" id="fileInput" accept=".exe"><br><br>
+
+<textarea id="hexArea" placeholder="Hex data will appear here..."></textarea><br>
+
+<button id="downloadBtn">Download Modified EXE</button>
+
+<script>
+function bufferToHex(buffer) {
+    const bytes = new Uint8Array(buffer);
+    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join(" ");
+}
+
+function hexToBuffer(hex) {
+    const clean = hex.replace(/[^0-9a-fA-F]/g, "");
+    const bytes = new Uint8Array(clean.length / 2);
+    for (let i = 0; i < clean.length; i += 2) {
+        bytes[i / 2] = parseInt(clean.substr(i, 2), 16);
+    }
+    return bytes;
+}
+
+document.getElementById('fileInput').addEventListener('change', function() {
+    const file = this.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        const buf = e.target.result;
+        document.getElementById("hexArea").value = bufferToHex(buf);
+        window._originalBuffer = buf;
+    };
+
+    reader.readAsArrayBuffer(file);
+});
+
+document.getElementById("downloadBtn").addEventListener("click", () => {
+    const hex = document.getElementById("hexArea").value;
+    const bytes = hexToBuffer(hex);
+
+    const blob = new Blob([bytes], { type: "application/octet-stream" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "modified.exe";
+    a.click();
+});
+</script>
+
+</body>
+</html>
