@@ -1,8 +1,8 @@
 import os
 import shutil
 
-# This points to the folder you opened in a-Shell (iCloud Drive/Downloads)
-BASE_DIR = os.path.expanduser("~/Downloads")
+# Use the folder you opened in a-Shell
+BASE_DIR = os.getcwd()
 
 EXTENSIONS = {
     "Word": ["doc", "docx", "odt", "rtf", "wpd", "pages"],
@@ -20,7 +20,7 @@ EXTENSIONS = {
     "Executables": ["exe", "app", "bat", "cmd", "run", "bin", "dmg"],
 }
 
-# Create folders in Downloads if missing
+# Create folders if missing
 for folder in EXTENSIONS.keys():
     os.makedirs(os.path.join(BASE_DIR, folder), exist_ok=True)
 os.makedirs(os.path.join(BASE_DIR, "Misc"), exist_ok=True)
