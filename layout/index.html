@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EchoSearch</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <!-- Google CSE moved to results page per new layout -->
+  <script>document.documentElement.classList.remove('no-js');</script>
+  <script>window.onerror = function(msg, url, line, col, error) { alert(msg + " (line " + line + ")"); };</script>
+  <meta name="google-site-verification" content="sJN11c059iHf18YLv3iUkR85omWdYcAdYk9xAxiu1dU" />
+  <meta name="google-site-verification" content="v8RBVgenjuedK_qLobbjBKBWvCgAGpJ-OgRE2Tj2tcQ" /> 
+  <meta name="yandex-verification" content="f690fe480a356b2e" />
+  <meta name="description" content="EchoSearch is a search engine that you can use to search anything. But unlike other search engines, there are multiple features to match your desire.">
+  <link rel="search" type="application/opensearchdescription+xml" title="EchoSearch" href="https://echo-search.github.io/essentials/opensearch.xml"/>
+  <link rel="manifest" href="/essentials/manifest.json">
+  <link rel="stylesheet" href="essentials/index-style.css">
+  <meta name="language" content="English">
+  <meta name="geo.region" content="world">
+  <meta name="geo.placename" content="Earth">
+  <meta name="coverage" content="worldwide">
+  <meta name="distribution" content="global">
+  <meta name="referrer" content="origin-when-cross-origin">
+  <meta name="rating" content="safe for kids">
+  <meta name="target" content="all">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="EchoSearch">
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","name":"EchoSearch","url":"https://echo-search.github.io/","logo":{"@type":"ImageObject","url":"[...]"}}]}</script>
+  <meta property="og:title" content="EchoSearch - The Clean Search Engine">
+  <meta property="og:description" content="A fast, clean, ad-free search engine with powerful features.">
+  <meta property="og:url" content="https://echo-search.github.io/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://echo-search.github.io/favicon.ico">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="EchoSearch">
+  <meta name="twitter:description" content="A clean, fast, ad-free search engine.">
+  <meta name="twitter:image" content="https://echo-search.github.io/essentials/echosearch-banner.png">
+
+  <!-- Shared script (deferred) -->
+  <script defer src="essentials/index-script.js"></script>
+</head>
+<body class="default home-page">
+  <header class="home-header" role="banner" aria-label="EchoSearch header">
+    <!-- Centered logo (base64 placeholder required) -->
+    <div class="home-logo-wrap" style="text-align:center;">
+      <img id="homeLogo" alt="EchoSearch" src="data:image/png;base64,{{BASE64_LOGO_HERE}}" class="logo-image" />
+    </div>
+
+    <!-- Theme selector preserved exactly (kept so existing theme logic attaches) -->
+    <div class="theme-selector" style="margin-top:1rem; text-align:center;">
+      <label for="theme" class="visually-hidden">Theme</label>
+      <select id="theme" aria-label="Select theme">
+        <option value="default">Default</option>
+        <option value="dark">Dark</option>
+        <option value="retro">Retro</option>
+        <option value="neon">Neon</option>
+        <option value="ocean">Ocean</option>
+        <option value="midnight">Midnight</option>
+        <option value="sunset">Sunset</option>
+        <option value="matrix">Matrix</option>
+        <option value="cyberpunk">Cyberpunk</option>
+        <option value="forest">Forest</option>
+        <option value="floral">Floral</option>
+      </select>
+    </div>
+  </header>
+
+  <!-- Centered main search form that submits to results page -->
+  <main class="home-main" role="main" aria-label="Search">
+    <form id="homeSearchForm" class="home-search-form" action="essentials/results.html" method="get" autocomplete="on" role="search">
+      <div class="search-container centered">
+        <input type="search" role="search" id="searchInput" name="q" placeholder="Type your search..." autocomplete="on" />
+        <ul id="suggestions" aria-hidden="true"></ul>
+        <button type="button" class="voice-btn" id="voiceBtn" aria-label="Voice search" title="Voice search">🎤</button>
+      </div>
+      <div class="button-group centered" style="margin-top:1rem;">
+        <button type="submit" id="searchBtn" aria-label="Search">Search</button>
+        <button type="button" id="surpriseBtn" aria-label="I'm Feeling Lucky">Surprise</button>
+      </div>
+    </form>
+  </main>
+
+  <!-- Optional UI bits preserved so JS finds them (audio/emoji/frame/chat toggles etc) -->
+  <a href="essentials/login.html" id="accountLink" class="account-link" aria-label="Account"><span class="icon">👤</span><span class="label">Account</span></a>
+
+  <audio id="audio67" src="essentials/67.m4a"></audio>
+  <div id="emojiContainer" aria-hidden="true"></div>
+
+  <div id="articles-link" aria-hidden="true"></div>
+
+  <h2 id="historyTitle" style="display:none; margin-top:1rem;"></h2>
+  <ul id="historyList" aria-hidden="true"></ul>
+  <button id="clearBtn" style="display:none; margin-bottom:0.5rem;">Clear</button>
+
+  <div id="newTabToggle" aria-hidden="true">
+    <span class="toggle-text">Open in new tab</span>
+    <div id="openInNewTabSlider" class="slider-switch"></div>
+  </div>
+
+  <div id="featureResult" class="feature-result hidden" aria-hidden="true"></div>
+
+  <iframe id="aiFrame" style="display:none;"></iframe>
+
+  <div id="echosearch-serp" style="display:none;">
+    <div role="main" id="gcse-results">
+      <div class="gcse-searchresults-only" data-gname="searchbox1" enableAutoComplete="true"></div>
+    </div>
+  </div>
+
+  <a href="articles/version-history.html" class="version-badge">v.3.0 beta</a>
+
+  <button id="chatBtn" class="chat-btn" style="display:none;" aria-hidden="true">Chat</button>
+
+  <div class="pri-pol">By using EchoSearch, you agree to the <a href="articles/privacy-policy.html">Privacy Policy</a> and <a href="articles/terms-of-conditions.html">Terms of Conditions</a>.</div>
+
+  <noscript>
+    <div class="no-js-msg">
+      JavaScript is required to use EchoSearch.<br>
+      Please turn it on and refresh the page.
+    </div>
+  </noscript>
+
+  <!-- Statcounter preserved -->
+  <script type="text/javascript">
+  var sc_project=13195324; 
+  var sc_invisible=1; 
+  var sc_security="ca13233c"; 
+  </script>
+  <script type="text/javascript" src="https://www.statcounter.com/counter/counter.js" async></script>
+  <noscript><div class="statcounter"><a title="Web Analytics Made Easy - Statcounter" href="https://statcounter.com/" target="_blank"><img class="statcounter" src="https://c.statcounter.com/13195324/0/ca13233c/1/" alt="Web Analytics Made Easy - Statcounter" referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
+
+  <!-- firebase-sync.js preserved (keeps being loaded on homepage) -->
+  <script src="essentials/firebase-sync.js" defer></script>
+</body>
+</html>
