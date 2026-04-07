@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EchoSearch — Results</title>
+
+  <!-- Shared CSS and JS (use ../ relative paths as required) -->
+  <link rel="stylesheet" href="../essentials/index-style.css">
+  <script defer src="../essentials/index-script.js"></script>
+
+  <meta name="referrer" content="origin-when-cross-origin">
+  <meta name="theme-color" content="#ffffff">
+
+  <!-- Ensure we populate the query for Google CSE BEFORE the CSE script loads.
+       This inline script reads ?q=... and sets location.hash in the expected format
+       so window.__gcse callback (in index-script.js) will find gsc.q on load. -->
+  <script>
+    (function() {
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var q = params.get('q') || '';
+        if (q) {
+          // populate hash used by the CSE callback
+          var hash = 'gsc.q=' + encodeURIComponent(q);
+          // only set if not already present to avoid interfering
+          if (!window.location.hash || window.location.hash.indexOf('gsc.q=') === -1) {
+            // Use replaceState so browser back history isn't polluted
+            try {
+              history.replaceState(null, '', window.location.pathname + window.location.search + '#' + hash);
+            } catch (e) {
+              window.location.hash = hash;
+            }
+          } else {
+            // If hash exists but no gsc.q param, append it
+            if (window.location.hash.indexOf('gsc.q=') === -1) {
+              window.location.hash = window.location.hash + '&' + hash;
+            }
+          }
+        }
+        // Also ensure a search input exists on the page prefilled before CSE loads.
+        // The shared script will also re-apply this value, but we set early here.
+        document.addEventListener('DOMContentLoaded', function() {
+          var inp = document.getElementById('searchInput');
+          if (inp && q) inp.value = decodeURIComponent(q);
+        });
+      } catch (e) {
+        // Silent fail — don't block CSE
+      }
+    })();
+  </script>
+
+  <!-- Include Google CSE exactly as required -->
+  <script async src="https://cse.google.com/cse.js?cx=8504b5117a0734987"></script>
+</head>
+<body class="default results-page">
+  <header class="results-topbar" role="banner" aria-label="Search results top bar">
+    <div class="topbar-inner" style="display:flex; align-items:center; gap:12px; max-width:1100px; margin:0 auto; padding:12px;">
+      <div class="logo-left" style="display:flex; align-items:center;">
+        <a href="../index.html" aria-label="EchoSearch home" style="display:inline-flex; align-items:center; text-decoration:none;">
+          <img id="topLogo" alt="EchoSearch" src="data:image/png;base64,{{BASE64_LOGO_HERE}}" class="logo-image" style="height:40px; width:auto;" />
+        </a>
+      </div>
+
+      <div class="search-right" style="flex:1;">
+        <!-- Editable search bar prefilled from ?q=... (JS also fills it). Submitting reloads results page with new q. -->
+        <form id="resultsSearchForm" action="results.html" method="get" role="search" style="display:flex; gap:8px; align-items:center;">
+          <input type="search" id="searchInput" name="q" placeholder="Type your search..." autocomplete="on" aria-label="Search query" style="flex:1; padding:8px 12px; border-radius:20px; border:1px solid #ccc;" />
+          <button id="searchBtn" type="submit" aria-label="Search" style="padding:8px 14px; border-radius:20px;">Search</button>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <main id="mainResults" role="main" style="max-width:1100px; margin:16px auto; padding:0 12px;">
+    <div id="echosearch-serp">
+      <div role="main" id="gcse-results">
+        <div class="gcse-searchresults-only" data-gname="searchbox1" enableAutoComplete="true"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Hidden iframe preserved so shared JS that expects an iframe doesn't throw -->
+  <iframe id="aiFrame" style="display:none;"></iframe>
+
+  <!-- Footer/navigation preserved minimally -->
+  <div style="max-width:1100px; margin:10px auto; text-align:center; color:#666;">
+    <a href="../articles/version-history.html">v.3.0 beta</a> — <a href="../articles/privacy-policy.html">Privacy Policy</a>
+  </div>
+
+  <noscript>
+    <div class="no-js-msg">
+      JavaScript is required to use EchoSearch results.<br>
+      Please turn it on and refresh the page.
+    </div>
+  </noscript>
+</body>
+</html>
