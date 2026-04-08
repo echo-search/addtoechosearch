@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Cache Cleaner Simulator - Ultimate Junk Annihilator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0a0f1e 0%, #0c1222 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Courier New', monospace;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+
+        canvas {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+            z-index: 1;
+        }
+
+        #ui {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 2;
+            pointer-events: none;
+            padding: 12px 20px;
+            color: white;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.6);
+            font-weight: bold;
+        }
+
+        .top-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(6px);
+            border-radius: 48px;
+            padding: 8px 18px;
+            pointer-events: auto;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 1.2rem;
+        }
+
+        .multiplier-bar {
+            background: #2a2f3f;
+            border-radius: 20px;
+            height: 12px;
+            width: 160px;
+            overflow: hidden;
+        }
+
+        .multiplier-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #f0b34b, #ffd966);
+            transition: width 0.08s linear;
+        }
+
+        button, .mode-btn, .pause-btn {
+            background: #1f2a3e;
+            border: none;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            pointer-events: auto;
+            font-family: monospace;
+            transition: 0.1s;
+            box-shadow: 0 2px 6px black;
+        }
+
+        button:active {
+            transform: scale(0.96);
+        }
+
+        .mode-panel {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .game-over-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #0a0e1ae6;
+            backdrop-filter: blur(16px);
+            padding: 24px;
+            border-radius: 40px;
+            text-align: center;
+            z-index: 10;
+            color: white;
+            border: 1px solid gold;
+            min-width: 280px;
+            pointer-events: auto;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .warning-flash {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(255, 40, 0, 0.7);
+            height: 8px;
+            border-radius: 8px;
+            transition: 0.1s;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .wave-text {
+            position: fixed;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            font-weight: bold;
+            color: cyan;
+            text-shadow: 0 0 15px blue;
+            pointer-events: none;
+            z-index: 15;
+            animation: wavePop 0.6s ease-out forwards;
+        }
+
+        @keyframes wavePop {
+            0% { opacity: 1; transform: translate(-50%, -30%) scale(0.7);}
+            100% { opacity: 0; transform: translate(-50%, -80%) scale(1.5);}
+        }
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<div id="ui">
+    <div class="top-bar">
+        <div class="stats">
+            <span>💾 SCORE: <span id="scoreValue">0</span></span>
+            <span>⚡ COMBO: <span id="comboValue">0</span></span>
+            <span>⭐ MULTI: <span id="multiplierValue">1.0</span>x</span>
+            <span>❤️ LIVES: <span id="livesValue">3</span></span>
+        </div>
+        <div class="multiplier-bar"><div class="multiplier-fill" id="multFill"></div></div>
+        <div class="mode-panel">
+            <select id="difficultySelect" style="background:#1f2a3e;color:white;border-radius:20px;padding:4px 8px;">
+                <option value="easy">🍃 Easy</option>
+                <option value="normal" selected>⚙️ Normal</option>
+                <option value="hard">🔥 Hard</option>
+            </select>
+            <select id="gameModeSelect" style="background:#1f2a3e;color:white;border-radius:20px;padding:4px 8px;">
+                <option value="survival">♾️ Survival</option>
+                <option value="timeattack">⏱️ Time Attack</option>
+                <option value="precision">🎯 Precision</option>
+                <option value="chaos">🌀 Chaos</option>
+                <option value="onelife">💀 One-Life Hardcore</option>
+                <option value="bossrush">👾 Boss Rush</option>
+                <option value="mirror">🪞 Mirror Mode</option>
+                <option value="gravityflip">🔄 Gravity Flip</option>
+                <option value="safemode">🛡️ Safe Mode</option>
+            </select>
+            <button id="pauseBtn">⏸️ Pause</button>
+            <button id="soundToggleBtn">🔊 ON</button>
+        </div>
+    </div>
+    <div class="warning-flash" id="warningFlash"></div>
+</div>
+
+<script>
+    (function(){
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game state
+        let gameRunning = true;
+        let paused = false;
+        let animationId = null;
+        let soundEnabled = true;
+        let score = 0;
+        let lives = 3;
+        let combo = 0;
+        let multiplier = 1.0;
+        let multiplierBar = 0;
+        let shieldActive = false;
+        let slowMotion = false;
+        let freezeActive = false;
+        let magnetActive = false;
+        let magnetCursor = {x: 0, y: 0};
+        let cleanBeamActive = false;
+        let cleanBeamPos = null;
+        let doubleTapReady = true;
+        
+        // Time & spawn
+        let frame = 0;
+        let spawnCounter = 0;
+        let spawnDelay = 40;
+        let difficulty = "normal";
+        let gameMode = "survival";
+        let timeAttackRemaining = 30;
+        let challengeActive = null;
+        let challengeRemaining = 0;
+        let waveIncoming = false;
+        let waveFlashTimer = 0;
+        let screenShake = 0;
+        let junkNearBottomWarning = false;
+        
+        // Junk array & particles
+        let junks = [];
+        let particles = [];
+        
+        // Powerups & special events
+        let powerupActive = null;
+        
+        // Classes
+        class Junk {
+            constructor(x, y, vx, vy, size, type, specialProps={}) {
+                this.x = x; this.y = y; this.vx = vx; this.vy = vy;
+                this.size = size; this.type = type; // normal, golden, red, boss, split, teleport, etc
+                this.hp = (type === 'boss') ? 5 : 1;
+                this.angle = 0;
+                this.rotSpeed = (Math.random() - 0.5)*0.1;
+                this.scale = 1;
+                this.invisible = false;
+                this.invTimer = 0;
+                this.fadeAlpha = 1;
+                this.speedUpTimer = 0;
+                this.zigzagPhase = 0;
+                this.mergeCooldown = 0;
+                this.special = specialProps;
+                this.color = `hsl(${Math.random() * 360}, 70%, 55%)`;
+            }
+            update(){
+                if(freezeActive) return;
+                let speedMul = slowMotion ? 0.3 : 1;
+                let gravFlip = (gameMode === 'gravityflip') ? -0.2 : 0.2;
+                if(this.type === 'wave') this.x += Math.sin(frame*0.05)*1.2;
+                if(this.type === 'zigzag'){ this.zigzagPhase+=0.1; this.vx += Math.sin(this.zigzagPhase)*0.3; }
+                this.x += this.vx * speedMul;
+                this.y += this.vy * speedMul + (gravFlip * speedMul);
+                if(this.type === 'bounce'){
+                    if(this.x<0 || this.x>canvas.width) this.vx*=-1;
+                    if(this.y<0 || this.y>canvas.height) this.vy*=-1;
+                }
+                if(this.special?.teleport && Math.random()<0.005){
+                    this.x = Math.random()*canvas.width;
+                    this.y = Math.random()*canvas.height;
+                }
+                if(this.special?.shrink) this.scale *= 0.998;
+                if(this.type === 'red') this.angle += 0.05;
+                if(this.invTimer>0){ this.invTimer--; this.invisible = true; } else this.invisible = false;
+                if(this.type === 'fade') this.fadeAlpha = 0.5+Math.sin(Date.now()*0.008)*0.5;
+                if(this.speedUpTimer++ > 600) { this.vy*=1.2; this.speedUpTimer=0; }
+                this.mergeCooldown--;
+            }
+            draw(ctx){
+                if(this.invisible) return;
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.globalAlpha = this.fadeAlpha;
+                ctx.shadowBlur = 8;
+                let sz = this.size * this.scale;
+                if(this.type === 'golden') ctx.fillStyle = '#FFD966';
+                else if(this.type === 'red') ctx.fillStyle = '#E34234';
+                else if(this.type === 'boss') ctx.fillStyle = '#8B0000';
+                else ctx.fillStyle = this.color;
+                ctx.fillRect(-sz/2, -sz/2, sz, sz);
+                ctx.fillStyle = 'white';
+                ctx.font = `${sz*0.6}px monospace`;
+                ctx.fillText("🗑️", -sz/4, sz/4);
+                ctx.restore();
+            }
+        }
+        
+        class Particle {
+            constructor(x,y,vx,vy,life){
+                this.x=x; this.y=y; this.vx=vx; this.vy=vy; this.life=life;
+            }
+            update(){ this.x+=this.vx; this.y+=this.vy; this.life--; }
+            draw(ctx){ ctx.fillStyle=`rgba(255,180,50,${this.life/30})`; ctx.fillRect(this.x,this.y,4,4); }
+        }
+        
+        // Helpers
+        function playBeep(freq=800, dur=80){
+            if(!soundEnabled) return;
+            try{ let act = new AudioContext(); let osc = act.createOscillator(); let gain = act.createGain();
+                osc.connect(gain); gain.connect(act.destination); osc.frequency.value=freq; gain.gain.value=0.1;
+                osc.start(); gain.gain.exponentialRampToValueAtTime(0.00001, act.currentTime+dur/1000);
+                setTimeout(()=>{ act.close(); }, dur+50);
+            }catch(e){}
+        }
+        
+        function addScore(pts){
+            let add = pts * multiplier;
+            score += add;
+            combo++;
+            if(combo>100) combo=100;
+            updateMultiplier();
+            spawnFloatingText(`+${Math.floor(add)}`, magnetCursor.x, magnetCursor.y);
+            if(score<0 && gameMode!=='safemode') score=0;
+            updateUI();
+        }
+        
+        function loseLife(){
+            if(shieldActive || gameMode === 'safemode') return;
+            lives--;
+            screenShake = 12;
+            playBeep(300,200);
+            if(lives<=0) gameOver();
+            updateUI();
+        }
+        
+        function updateMultiplier(){
+            multiplier = 1 + Math.floor(combo/20) * 0.25;
+            if(multiplier>3) multiplier=3;
+            multiplierBar = (combo/100)*100;
+            document.getElementById('multFill').style.width = multiplierBar+"%";
+            document.getElementById('multiplierValue').innerText = multiplier.toFixed(1);
+        }
+        
+        function spawnJunk(forcedType=null){
+            let side = Math.random()<0.5 ? 'top' : 'left';
+            let x,y,vx,vy;
+            let baseSpeed = difficulty==='easy'?0.8:difficulty==='hard'?2.2:1.4;
+            if(gameMode === 'precision') baseSpeed=0.5;
+            if(forcedType === 'boss') baseSpeed=0.6;
+            if(side==='top'){ x=Math.random()*canvas.width; y=-30; vx=(Math.random()-0.5)*1.5; vy=baseSpeed+Math.random()*1.2; }
+            else{ x=-30; y=Math.random()*canvas.height; vx=baseSpeed; vy=(Math.random()-0.5)*1.2; }
+            if(gameMode==='mirror'){ vx*=-1; vy*=-1; }
+            if(gameMode==='gravityflip') vy*=-1;
+            let types = ['normal','golden','red','split','teleport','bounce','zigzag','fade','shrinking'];
+            if(gameMode==='chaos') types.push('wave','invisible','merge');
+            let type = forcedType ? forcedType : (Math.random()<0.1?'golden':(Math.random()<0.07?'red':types[Math.floor(Math.random()*types.length)]));
+            if(gameMode==='bossrush') type='boss';
+            let special = {};
+            if(type==='teleport') special.teleport=true;
+            if(type==='shrinking') special.shrink=true;
+            if(type==='invisible') special.invisible=true;
+            let sz = type==='boss'?48:24+Math.random()*16;
+            let junk = new Junk(x,y,vx,vy,sz,type,special);
+            if(type==='split') junk.hp=2;
+            junks.push(junk);
+        }
+        
+        function stormSpawn(){ for(let i=0;i<20;i++) spawnJunk(); }
+        
+        function spawnWave(){
+            waveIncoming=true; setTimeout(()=>{waveIncoming=false;},800);
+            let wText = document.createElement('div'); wText.className='wave-text'; wText.innerText='🌊 WAVE INCOMING!'; document.body.appendChild(wText);
+            setTimeout(()=>wText.remove(),600);
+            for(let i=0;i<12;i++) spawnJunk();
+        }
+        
+        function updateUI(){
+            document.getElementById('scoreValue').innerText = Math.floor(score);
+            document.getElementById('comboValue').innerText = combo;
+            document.getElementById('livesValue').innerText = (gameMode==='safemode'?'∞':lives);
+        }
+        
+        function spawnFloatingText(text,x,y){
+            // handled in draw floating popups array
+            if(!window.floatingTexts) window.floatingTexts=[];
+            window.floatingTexts.push({text,x,y,life:30});
+        }
+        
+        function handleClick(e){
+            if(!gameRunning || paused) return;
+            let rect = canvas.getBoundingClientRect();
+            let scaleX = canvas.width/rect.width;
+            let scaleY = canvas.height/rect.height;
+            let clickX = (e.clientX-rect.left)*scaleX;
+            let clickY = (e.clientY-rect.top)*scaleY;
+            if(gameMode==='mirror'){ clickX = canvas.width-clickX; clickY = canvas.height-clickY; }
+            if(cleanBeamActive){ cleanBeamPos={x:clickX,y:clickY}; return; }
+            let hit = false;
+            for(let i=junks.length-1;i>=0;i--){
+                let j=junks[i];
+                let dx = clickX - j.x, dy = clickY - j.y;
+                if(Math.abs(dx)<j.size/2 && Math.abs(dy)<j.size/2){
+                    hit=true;
+                    if(j.type === 'red'){ addScore(-3); if(!gameMode.includes('safe')) loseLife(); }
+                    else{
+                        let basePoints = j.type==='golden'?5:(j.type==='boss'?2:1);
+                        addScore(basePoints);
+                        if(j.type==='split' && j.hp>1){
+                            for(let s=0;s<3;s++) spawnJunk('normal');
+                            junks.splice(i,1);
+                        }else if(j.type==='boss'){
+                            j.hp--;
+                            if(j.hp<=0){
+                                for(let ex=0;ex<12;ex++) particles.push(new Particle(j.x,j.y,(Math.random()-0.5)*5,(Math.random()-0.5)*5,25));
+                                junks.splice(i,1);
+                                addScore(15);
+                            }
+                        }else{
+                            if(j.type==='explode') for(let e=0;e<8;e++) particles.push(new Particle(j.x,j.y,(Math.random()-0.5)*4,(Math.random()-0.5)*4,20));
+                            junks.splice(i,1);
+                        }
+                    }
+                    if(combo>=100){ addScore(50); combo=0; spawnFloatingText("STREAK BONUS!",clickX,clickY); }
+                    break;
+                }
+            }
+            if(!hit && gameMode==='precision') loseLife();
+            if(hit) playBeep(1200,40);
+        }
+        
+        function applyPowerup(p){
+            if(p==='clearAll'){ junks=[]; playBeep(1500,100); screenShake=6; }
+            if(p==='slowmo') slowMotion=true; setTimeout(()=>slowMotion=false,5000);
+            if(p==='freeze') freezeActive=true; setTimeout(()=>freezeActive=false,4000);
+            if(p==='shield'){ shieldActive=true; setTimeout(()=>shieldActive=false,8000); }
+            if(p==='magnet') magnetActive=true; setTimeout(()=>magnetActive=false,7000);
+            document.body.style.backgroundColor = 'rgba(255,215,0,0.2)'; setTimeout(()=>document.body.style.backgroundColor='',200);
+        }
+        
+        function gameOver(){
+            gameRunning=false;
+            let high = localStorage.getItem('highscore')||0;
+            if(score>high) localStorage.setItem('highscore',Math.floor(score));
+            document.getElementById('gameOverPanel').classList.remove('hidden');
+            document.getElementById('finalScore').innerText = Math.floor(score);
+            document.getElementById('highScoreSpan').innerText = Math.max(high,score);
+        }
+        
+        function restartGame(){
+            junks=[];
+            particles=[];
+            score=0; combo=0; lives=3; multiplier=1; shieldActive=false; freezeActive=false; slowMotion=false; magnetActive=false;
+            gameRunning=true; paused=false; timeAttackRemaining=30;
+            updateUI(); updateMultiplier();
+            document.getElementById('gameOverPanel').classList.add('hidden');
+        }
+        
+        // Main update loop
+        function updateGame(){
+            if(!gameRunning || paused) return;
+            if(gameMode==='timeattack'){ timeAttackRemaining-=1/60; if(timeAttackRemaining<=0) gameOver(); }
+            if(magnetActive && magnetCursor){
+                for(let j of junks){
+                    let dx = magnetCursor.x - j.x, dy = magnetCursor.y - j.y;
+                    let dist = Math.hypot(dx,dy);
+                    if(dist<150){ j.vx += dx*0.02; j.vy += dy*0.02; }
+                }
+            }
+            for(let i=0;i<junks.length;i++){
+                junks[i].update();
+                if(junks[i].y>canvas.height+100 || junks[i].y<-100 || junks[i].x<-100 || junks[i].x>canvas.width+100){
+                    if(gameMode!=='safemode') loseLife();
+                    junks.splice(i,1); i--;
+                }
+                if(junks[i] && junks[i].y>canvas.height-60) junkNearBottomWarning=true;
+            }
+            if(junkNearBottomWarning){
+                document.getElementById('warningFlash').style.backgroundColor='rgba(255,40,0,0.8)';
+                setTimeout(()=>{document.getElementById('warningFlash').style.backgroundColor='rgba(255,40,0,0)';},200);
+                junkNearBottomWarning=false;
+            }
+            for(let i=0;i<particles.length;i++){ particles[i].update(); if(particles[i].life<=0) particles.splice(i,1); }
+            if(window.floatingTexts) window.floatingTexts = window.floatingTexts.filter(t=>--t.life>0);
+            if(frame%spawnDelay===0){
+                if(gameMode==='bossrush'){ if(junks.filter(j=>j.type==='boss').length<2) spawnJunk('boss'); }
+                else if(Math.random()<0.2) spawnWave();
+                else spawnJunk();
+                if(frame%300===0 && Math.random()<0.4) stormSpawn();
+            }
+            if(frame%600===0) applyPowerup('clearAll');
+            frame++;
+            if(screenShake>0) screenShake--;
+        }
+        
+        function draw(){
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.save();
+            if(screenShake>0){ ctx.translate((Math.random()-0.5)*6, (Math.random()-0.5)*6); }
+            ctx.fillStyle = '#101624'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            for(let j of junks) j.draw(ctx);
+            for(let p of particles) p.draw(ctx);
+            if(window.floatingTexts){
+                for(let t of window.floatingTexts){
+                    ctx.font = 'bold 20px monospace'; ctx.fillStyle='gold'; ctx.shadowBlur=0;
+                    ctx.fillText(t.text, t.x, t.y-t.life);
+                }
+            }
+            if(cleanBeamActive && cleanBeamPos){
+                ctx.beginPath(); ctx.arc(cleanBeamPos.x,cleanBeamPos.y,40,0,Math.PI*2);
+                ctx.fillStyle='rgba(0,255,200,0.5)'; ctx.fill();
+                for(let i=junks.length-1;i>=0;i--){
+                    let d = Math.hypot(junks[i].x-cleanBeamPos.x, junks[i].y-cleanBeamPos.y);
+                    if(d<50){ junks.splice(i,1); addScore(1); }
+                }
+            }
+            ctx.restore();
+        }
+        
+        function animate(){
+            updateGame();
+            draw();
+            requestAnimationFrame(animate);
+        }
+        
+        function resizeCanvas(){
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        // Event listeners
+        window.addEventListener('resize',()=>{ resizeCanvas(); });
+        canvas.addEventListener('click', handleClick);
+        canvas.addEventListener('mousemove',(e)=>{
+            let rect = canvas.getBoundingClientRect();
+            let sx = (e.clientX-rect.left)*(canvas.width/rect.width);
+            let sy = (e.clientY-rect.top)*(canvas.height/rect.height);
+            magnetCursor = {x:sx, y:sy};
+        });
+        canvas.addEventListener('touchstart',(e)=>{ e.preventDefault(); let rect = canvas.getBoundingClientRect(); let t = e.touches[0];
+            let cx = (t.clientX-rect.left)*(canvas.width/rect.width); let cy = (t.clientY-rect.top)*(canvas.height/rect.height);
+            let ev = {clientX:cx* (rect.width/canvas.width), clientY:cy*(rect.height/canvas.height)}; handleClick(ev);
+        });
+        document.getElementById('pauseBtn').onclick=()=>{ paused=!paused; document.getElementById('pauseBtn').innerText=paused?'▶️ Resume':'⏸️ Pause'; };
+        document.getElementById('soundToggleBtn').onclick=()=>{ soundEnabled=!soundEnabled; document.getElementById('soundToggleBtn').innerText=soundEnabled?'🔊 ON':'🔇 OFF'; };
+        document.getElementById('difficultySelect').onchange=(e)=>{ difficulty=e.target.value; };
+        document.getElementById('gameModeSelect').onchange=(e)=>{ gameMode=e.target.value; restartGame(); };
+        
+        // powerup spawn random
+        setInterval(()=>{ if(gameRunning && !paused && Math.random()<0.15){ let powers=['clearAll','slowmo','freeze','shield','magnet']; applyPowerup(powers[Math.floor(Math.random()*powers.length)]); } }, 12000);
+        
+        setInterval(()=>{ if(gameRunning && !paused && combo>=20) { combo+=2; updateMultiplier(); } }, 5000);
+        
+        // long press clean beam
+        let longPressTimer;
+        canvas.addEventListener('mousedown',(e)=>{ if(!gameRunning || paused) return; longPressTimer=setTimeout(()=>{ cleanBeamActive=true; },400); });
+        canvas.addEventListener('mouseup',()=>{ clearTimeout(longPressTimer); cleanBeamActive=false; cleanBeamPos=null; });
+        
+        // final panel
+        let panelDiv = document.createElement('div'); panelDiv.id='gameOverPanel'; panelDiv.className='game-over-panel hidden';
+        panelDiv.innerHTML = `<h2>💀 GAME OVER</h2><p>Score: <span id="finalScore">0</span></p><p>🏆 Highscore: <span id="highScoreSpan">0</span></p><button id="restartBtn">🧹 CLEAN AGAIN</button>`;
+        document.body.appendChild(panelDiv);
+        document.getElementById('restartBtn').onclick=()=>{ restartGame(); panelDiv.classList.add('hidden'); };
+        
+        resizeCanvas();
+        restartGame();
+        animate();
+    })();
+</script>
+</body>
+</html>
