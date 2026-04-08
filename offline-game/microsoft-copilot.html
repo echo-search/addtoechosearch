@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cache Cleaner Simulator</title>
+<style>
+    * { box-sizing: border-box; }
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #05070a;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #f5f5f5;
+    }
+    #gameCanvas {
+        display: block;
+        background: radial-gradient(circle at top, #1b2735 0%, #090a0f 60%, #020308 100%);
+    }
+    #ui {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        pointer-events: none;
+        padding: 8px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 14px;
+    }
+    #topBar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        pointer-events: auto;
+    }
+    #scorePanel {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    .pill {
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 0 8px rgba(0,0,0,0.6);
+    }
+    #buttons {
+        display: flex;
+        gap: 6px;
+    }
+    button {
+        pointer-events: auto;
+        border: none;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+        cursor: pointer;
+        background: rgba(255,255,255,0.08);
+        color: #f5f5f5;
+        transition: background 0.15s, transform 0.1s;
+    }
+    button:hover {
+        background: rgba(255,255,255,0.18);
+        transform: translateY(-1px);
+    }
+    button:active {
+        transform: translateY(0);
+        background: rgba(255,255,255,0.25);
+    }
+    #modeSelect {
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(circle at top, rgba(0,0,0,0.9), rgba(0,0,0,0.98));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+    }
+    #modePanel {
+        background: rgba(10,12,18,0.96);
+        border-radius: 16px;
+        padding: 20px 22px;
+        max-width: 520px;
+        width: 90%;
+        box-shadow: 0 18px 40px rgba(0,0,0,0.8);
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+    #modePanel h1 {
+        margin: 0 0 4px;
+        font-size: 22px;
+    }
+    #modePanel p {
+        margin: 0 0 12px;
+        font-size: 13px;
+        color: #c0c4d0;
+    }
+    #modeGrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 8px;
+        margin-top: 8px;
+    }
+    .modeBtn {
+        border-radius: 10px;
+        padding: 8px 10px;
+        text-align: left;
+        font-size: 12px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+        border: 1px solid rgba(255,255,255,0.08);
+        cursor: pointer;
+        color: #f5f5f5;
+    }
+    .modeBtn strong {
+        display: block;
+        margin-bottom: 2px;
+        font-size: 12px;
+    }
+    .modeBtn span {
+        font-size: 11px;
+        color: #c0c4d0;
+    }
+    #bottomBar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        pointer-events: none;
+    }
+    #multiplierBarContainer, #spawnBarContainer {
+        flex: 1;
+        margin-top: 4px;
+        margin-right: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.06);
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+    #multiplierBar, #spawnBar {
+        height: 100%;
+        width: 0%;
+        border-radius: 999px;
+    }
+    #multiplierBar {
+        background: linear-gradient(90deg, #4ade80, #22c55e, #a3e635);
+    }
+    #spawnBar {
+        background: linear-gradient(90deg, #38bdf8, #0ea5e9, #22d3ee);
+    }
+    #statusText {
+        font-size: 12px;
+        color: #cbd5f5;
+        pointer-events: none;
+    }
+    #waveText {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.9);
+        text-shadow: 0 0 18px rgba(59,130,246,0.9);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+    }
+    #summaryPanel {
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(circle at top, rgba(0,0,0,0.9), rgba(0,0,0,0.98));
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 20;
+    }
+    #summaryCard {
+        background: rgba(10,12,18,0.96);
+        border-radius: 16px;
+        padding: 18px 20px;
+        max-width: 420px;
+        width: 90%;
+        box-shadow: 0 18px 40px rgba(0,0,0,0.8);
+        border: 1px solid rgba(255,255,255,0.08);
+        font-size: 13px;
+    }
+    #summaryCard h2 {
+        margin: 0 0 8px;
+        font-size: 20px;
+    }
+    #summaryStats {
+        margin: 10px 0 14px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px 12px;
+    }
+    #summaryStats div {
+        background: rgba(255,255,255,0.03);
+        border-radius: 8px;
+        padding: 6px 8px;
+    }
+    #summaryStats strong {
+        display: block;
+        font-size: 11px;
+        color: #9ca3af;
+    }
+    #summaryStats span {
+        font-size: 13px;
+        color: #e5e7eb;
+    }
+    #summaryButtons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 6px;
+    }
+    #warningFlash {
+        position: fixed;
+        inset: 0;
+        background: rgba(248,113,113,0.18);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.15s;
+        mix-blend-mode: screen;
+    }
+    #powerupHint {
+        font-size: 11px;
+        color: #9ca3af;
+        margin-top: 2px;
+    }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<div id="ui">
+    <div id="topBar">
+        <div id="scorePanel">
+            <div class="pill" id="scoreLabel">Score: <span id="scoreValue">0</span></div>
+            <div class="pill" id="comboLabel">Combo: <span id="comboValue">0</span>x</div>
+            <div class="pill" id="livesLabel">Lives: <span id="livesValue">3</span></div>
+            <div class="pill" id="timerLabel">Time: <span id="timerValue">∞</span></div>
+            <div class="pill" id="highLabel">Best: <span id="highValue">0</span></div>
+        </div>
+        <div id="buttons">
+            <button id="pauseBtn">Pause</button>
+            <button id="soundBtn">Sound: On</button>
+        </div>
+    </div>
+    <div id="bottomBar">
+        <div id="multiplierBarContainer">
+            <div id="multiplierBar"></div>
+        </div>
+        <div id="spawnBarContainer">
+            <div id="spawnBar"></div>
+        </div>
+        <div id="statusText">Mode: —</div>
+    </div>
+    <div id="powerupHint">Tip: Long-press to fire a Clean Beam. Double-tap junk for a power hit.</div>
+</div>
+
+<div id="modeSelect">
+    <div id="modePanel">
+        <h1>Cache Cleaner Simulator</h1>
+        <p>Click the junk to clean your cache. Chain combos, trigger power-ups, and survive the storm of clutter.</p>
+        <div id="modeGrid">
+            <button class="modeBtn" data-mode="time">
+                <strong>Time Attack</strong>
+                <span>30 seconds to clean as much as you can.</span>
+            </button>
+            <button class="modeBtn" data-mode="survival">
+                <strong>Survival</strong>
+                <span>Endless waves with rising spawn speed.</span>
+            </button>
+            <button class="modeBtn" data-mode="precision">
+                <strong>Precision Mode</strong>
+                <span>Slow junk, but missed clicks are punished.</span>
+            </button>
+            <button class="modeBtn" data-mode="chaos">
+                <strong>Chaos Mode</strong>
+                <span>Randomized behaviors and stormy spawns.</span>
+            </button>
+            <button class="modeBtn" data-mode="hardcore">
+                <strong>One-Life Hardcore</strong>
+                <span>One mistake and your cache overflows.</span>
+            </button>
+            <button class="modeBtn" data-mode="mini">
+                <strong>Mini-Challenges</strong>
+                <span>Short objectives like “20 junk in 10s”.</span>
+            </button>
+            <button class="modeBtn" data-mode="boss">
+                <strong>Boss Rush</strong>
+                <span>Only boss junk. Break them down.</span>
+            </button>
+            <button class="modeBtn" data-mode="mirror">
+                <strong>Mirror Mode</strong>
+                <span>Reversed controls. Left is right.</span>
+            </button>
+            <button class="modeBtn" data-mode="gravity">
+                <strong>Gravity Flip</strong>
+                <span>Junk rises upward instead of falling.</span>
+            </button>
+            <button class="modeBtn" data-mode="safe">
+                <strong>Safe Mode</strong>
+                <span>No failure. Just satisfying cleaning.</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="waveText">WAVE INCOMING</div>
+<div id="summaryPanel">
+    <div id="summaryCard">
+        <h2>Run Summary</h2>
+        <div id="summaryStats">
+            <div><strong>Mode</strong><span id="sumMode">—</span></div>
+            <div><strong>Score</strong><span id="sumScore">0</span></div>
+            <div><strong>Best</strong><span id="sumBest">0</span></div>
+            <div><strong>Time</strong><span id="sumTime">0s</span></div>
+            <div><strong>Clicks</strong><span id="sumClicks">0</span></div>
+            <div><strong>Accuracy</strong><span id="sumAccuracy">0%</span></div>
+        </div>
+        <div id="summaryButtons">
+            <button id="summaryMenuBtn">Main Menu</button>
+            <button id="summaryRetryBtn">Play Again</button>
+        </div>
+    </div>
+</div>
+<div id="warningFlash"></div>
+
+<script>
+(function() {
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    window.addEventListener('resize', () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+    });
+
+    // UI elements
+    const scoreValue = document.getElementById('scoreValue');
+    const comboValue = document.getElementById('comboValue');
+    const livesValue = document.getElementById('livesValue');
+    const timerValue = document.getElementById('timerValue');
+    const highValue = document.getElementById('highValue');
+    const statusText = document.getElementById('statusText');
+    const multiplierBar = document.getElementById('multiplierBar');
+    const spawnBar = document.getElementById('spawnBar');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const soundBtn = document.getElementById('soundBtn');
+    const modeSelect = document.getElementById('modeSelect');
+    const modeButtons = document.querySelectorAll('.modeBtn');
+    const waveText = document.getElementById('waveText');
+    const warningFlash = document.getElementById('warningFlash');
+
+    const summaryPanel = document.getElementById('summaryPanel');
+    const sumMode = document.getElementById('sumMode');
+    const sumScore = document.getElementById('sumScore');
+    const sumBest = document.getElementById('sumBest');
+    const sumTime = document.getElementById('sumTime');
+    const sumClicks = document.getElementById('sumClicks');
+    const sumAccuracy = document.getElementById('sumAccuracy');
+    const summaryMenuBtn = document.getElementById('summaryMenuBtn');
+    const summaryRetryBtn = document.getElementById('summaryRetryBtn');
+
+    // Audio (simple beeps)
+    let audioEnabled = true;
+    let audioCtx = null;
+    function initAudio() {
+        if (!audioCtx) {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                audioEnabled = false;
+            }
+        }
+    }
+    function playBeep(freq, duration, type) {
+        if (!audioEnabled) return;
+        if (!audioCtx) initAudio();
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type || 'sine';
+        osc.frequency.value = freq;
+        gain.gain.value = 0.15;
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+    // Utility
+    function rand(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+    function randInt(min, max) {
+        return Math.floor(rand(min, max + 1));
+    }
+    function clamp(v, min, max) {
+        return v < min ? min : (v > max ? max : v);
+    }
+
+    // Game state
+    let junkList = [];
+    let particles = [];
+    let popups = [];
+    let lastTime = performance.now();
+    let spawnTimer = 0;
+    let spawnInterval = 900;
+    const minSpawnInterval = 200;
+    const maxSpawnInterval = 1200;
+    let gameRunning = false;
+    let paused = false;
+    let score = 0;
+    let combo = 0;
+    let multiplier = 1;
+    let multiplierProgress = 0;
+    let lives = 3;
+    let timeLeft = Infinity;
+    let elapsedTime = 0;
+    let totalClicks = 0;
+    let successfulClicks = 0;
+    let streak = 0;
+    let streakRewardGiven = false;
+    let speedLevelTimer = 0;
+    let globalSpeedMultiplier = 1;
+    let waveIncomingTimer = 0;
+    let flashScreenTimer = 0;
+    let screenShakeTimer = 0;
+    let screenShakeMagnitude = 0;
+    let warningTimer = 0;
+    let freezeTimer = 0;
+    let slowMotionTimer = 0;
+    let shieldTimer = 0;
+    let magnetTimer = 0;
+    let clearAllReady = false;
+    let cleanBeamActive = false;
+    let cleanBeamX = 0;
+    let cleanBeamTimer = 0;
+    let gravityFlip = false;
+    let mirrorControls = false;
+    let difficulty = 'Normal';
+    let mode = null;
+    let modeName = '';
+    let miniChallengeActive = false;
+    let miniChallengeTarget = 0;
+    let miniChallengeTime = 0;
+    let miniChallengeProgress = 0;
+    let miniChallengeSuccess = false;
+    let safeMode = false;
+    let hardcore = false;
+    let precisionMode = false;
+    let chaosMode = false;
+    let bossRush = false;
+    let timeAttack = false;
+    let survivalMode = false;
+    let oneLife = false;
+    let gravityMode = false;
+    let mirrorMode = false;
+
+    let lastClickTime = 0;
+    let lastClickPos = { x: 0, y: 0 };
+    const doubleTapThreshold = 250;
+    const doubleTapDistance = 40;
+
+    let pointerDown = false;
+    let pointerDownTime = 0;
+    let pointerPos = { x: 0, y: 0 };
+
+    const highscoreKey = 'cache_cleaner_highscore_v1';
+    let highscore = parseInt(localStorage.getItem(highscoreKey) || '0', 10) || 0;
+    highValue.textContent = highscore;
+
+    // Classes
+    class Junk {
+        constructor(opts) {
+            this.x = opts.x;
+            this.y = opts.y;
+            this.r = opts.r;
+            this.baseR = this.r;
+            this.vx = opts.vx;
+            this.vy = opts.vy;
+            this.color = opts.color;
+            this.shape = opts.shape; // 'circle', 'square', 'triangle'
+            this.points = opts.points || 1;
+            this.isGolden = !!opts.isGolden;
+            this.isRed = !!opts.isRed;
+            this.isBoss = !!opts.isBoss;
+            this.hp = this.isBoss ? opts.hp || 10 : 1;
+            this.splitOnDeath = !!opts.splitOnDeath;
+            this.sideways = !!opts.sideways;
+            this.teleporting = !!opts.teleporting;
+            this.rotating = !!opts.rotating;
+            this.angle = 0;
+            this.angularSpeed = rand(-2, 2) * Math.PI / 180;
+            this.shrinkOverTime = !!opts.shrinkOverTime;
+            this.speedUp = !!opts.speedUp;
+            this.bouncing = !!opts.bouncing;
+            this.zigzag = !!opts.zigzag;
+            this.wave = !!opts.wave;
+            this.wavePhase = rand(0, Math.PI * 2);
+            this.invisible = !!opts.invisible;
+            this.invisibleTimer = rand(1, 3);
+            this.fade = !!opts.fade;
+            this.fadePhase = rand(0, Math.PI * 2);
+            this.mergeable = !!opts.mergeable;
+            this.sizeChange = !!opts.sizeChange;
+            this.sizePhase = rand(0, Math.PI * 2);
+            this.markedForRemoval = false;
+        }
+        update(dt) {
+            let speedMul = globalSpeedMultiplier;
+            if (slowMotionTimer > 0) speedMul *= 0.35;
+            if (freezeTimer > 0) speedMul = 0;
+            let vyDir = gravityFlip ? -1 : 1;
+
+            if (this.wave) {
+                this.wavePhase += dt * 2;
+                this.x += Math.sin(this.wavePhase) * 40 * dt;
+            }
+            if (this.zigzag) {
+                this.vx += Math.sin(performance.now() / 200 + this.wavePhase) * 10 * dt;
+            }
+            if (this.sideways) {
+                this.vx += rand(-20, 20) * dt;
+            }
+            this.x += this.vx * dt * speedMul;
+            this.y += this.vy * dt * speedMul * vyDir;
+
+            if (this.bouncing) {
+                if (this.x - this.r < 0 && this.vx < 0) this.vx *= -1;
+                if (this.x + this.r > width && this.vx > 0) this.vx *= -1;
+            }
+
+            if (this.teleporting && Math.random() < 0.002 * dt * 60) {
+                this.x = rand(this.r, width - this.r);
+                this.y = gravityFlip ? rand(height * 0.2, height - this.r) : rand(this.r, height * 0.8);
+            }
+
+            if (this.rotating) {
+                this.angle += this.angularSpeed;
+            }
+
+            if (this.shrinkOverTime) {
+                this.r *= (1 - 0.05 * dt);
+                if (this.r < 6) this.r = 6;
+            }
+
+            if (this.sizeChange) {
+                this.sizePhase += dt * 3;
+                this.r = this.baseR * (0.7 + 0.3 * Math.sin(this.sizePhase));
+            }
+
+            if (this.fade) {
+                this.fadePhase += dt * 2;
+            }
+
+            if (this.invisible) {
+                this.invisibleTimer -= dt;
+                if (this.invisibleTimer <= 0) {
+                    this.invisibleTimer = rand(1, 3);
+                }
+            }
+
+            if (this.speedUp) {
+                // handled globally via globalSpeedMultiplier
+            }
+
+            if (magnetTimer > 0) {
+                const dx = pointerPos.x - this.x;
+                const dy = pointerPos.y - this.y;
+                const dist = Math.hypot(dx, dy) || 1;
+                const pull = 120 * dt;
+                this.x += (dx / dist) * pull;
+                this.y += (dy / dist) * pull;
+            }
+
+            if (!gravityFlip && this.y - this.r > height + 40) {
+                this.miss();
+            } else if (gravityFlip && this.y + this.r < -40) {
+                this.miss();
+            }
+        }
+        miss() {
+            this.markedForRemoval = true;
+            if (safeMode) return;
+            if (shieldTimer > 0) return;
+            lives -= 1;
+            if (lives < 0) lives = 0;
+            combo = 0;
+            multiplier = 1;
+            multiplierProgress = 0;
+            screenShakeTimer = 0.25;
+            screenShakeMagnitude = 12;
+            playBeep(160, 0.15, 'sawtooth');
+            if (lives <= 0 && !safeMode) {
+                endGame();
+            }
+        }
+        draw(ctx) {
+            let alpha = 1;
+            if (this.fade) {
+                alpha *= 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(this.fadePhase));
+            }
+            if (this.invisible && this.invisibleTimer < 0.5) {
+                alpha *= 0.1;
+            }
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.angle);
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = this.color;
+            if (this.shape === 'square') {
+                ctx.fillRect(-this.r, -this.r, this.r * 2, this.r * 2);
+            } else if (this.shape === 'triangle') {
+                ctx.beginPath();
+                ctx.moveTo(0, -this.r);
+                ctx.lineTo(this.r, this.r);
+                ctx.lineTo(-this.r, this.r);
+                ctx.closePath();
+                ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.arc(0, 0, this.r, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            if (this.isBoss) {
+                ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.r + 3, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                ctx.fillRect(-this.r, -this.r - 10, this.r * 2, 6);
+                ctx.fillStyle = 'rgba(248,250,252,0.9)';
+                const hpRatio = clamp(this.hp / 10, 0, 1);
+                ctx.fillRect(-this.r, -this.r - 10, this.r * 2 * hpRatio, 6);
+            }
+            ctx.restore();
+            ctx.globalAlpha = 1;
+        }
+        containsPoint(x, y) {
+            const dx = x - this.x;
+            const dy = y - this.y;
+            const dist = Math.hypot(dx, dy);
+            return dist <= this.r * 1.1;
+        }
+    }
+
+    class Particle {
+        constructor(x, y, color) {
+            this.x = x;
+            this.y = y;
+            this.vx = rand(-120, 120);
+            this.vy = rand(-160, -40);
+            this.life = rand(0.4, 0.9);
+            this.maxLife = this.life;
+            this.color = color;
+            this.size = rand(2, 5);
+        }
+        update(dt) {
+            this.life -= dt;
+            this.x += this.vx * dt;
+            this.y += this.vy * dt;
+            this.vy += 260 * dt * (gravityFlip ? -1 : 1);
+        }
+        draw(ctx) {
+            if (this.life <= 0) return;
+            const alpha = clamp(this.life / this.maxLife, 0, 1);
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    class PopupText {
+        constructor(x, y, text, color) {
+            this.x = x;
+            this.y = y;
+            this.text = text;
+            this.color = color;
+            this.life = 0.8;
+            this.maxLife = 0.8;
+        }
+        update(dt) {
+            this.life -= dt;
+            this.y -= 40 * dt;
+        }
+        draw(ctx) {
+            if (this.life <= 0) return;
+            const alpha = clamp(this.life / this.maxLife, 0, 1);
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = this.color;
+            ctx.font = 'bold 16px system-ui';
+            ctx.textAlign = 'center';
+            ctx.fillText(this.text, this.x, this.y);
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    // Game logic
+    function resetGame() {
+        junkList = [];
+        particles = [];
+        popups = [];
+        spawnTimer = 0;
+        spawnInterval = 900;
+        globalSpeedMultiplier = 1;
+        speedLevelTimer = 0;
+        score = 0;
+        combo = 0;
+        multiplier = 1;
+        multiplierProgress = 0;
+        lives = oneLife ? 1 : (difficulty === 'Easy' ? 5 : difficulty === 'Hard' ? 2 : 3);
+        timeLeft = timeAttack ? 30 : Infinity;
+        elapsedTime = 0;
+        totalClicks = 0;
+        successfulClicks = 0;
+        streak = 0;
+        streakRewardGiven = false;
+        waveIncomingTimer = 0;
+        flashScreenTimer = 0;
+        screenShakeTimer = 0;
+        warningTimer = 0;
+        freezeTimer = 0;
+        slowMotionTimer = 0;
+        shieldTimer = 0;
+        magnetTimer = 0;
+        clearAllReady = false;
+        cleanBeamActive = false;
+        cleanBeamTimer = 0;
+        miniChallengeActive = false;
+        miniChallengeSuccess = false;
+        miniChallengeProgress = 0;
+        miniChallengeTime = 0;
+        miniChallengeTarget = 0;
+        if (mode === 'mini') {
+            startMiniChallenge();
+        }
+        updateUI();
+    }
+
+    function startMiniChallenge() {
+        miniChallengeActive = true;
+        miniChallengeTarget = randInt(15, 25);
+        miniChallengeTime = 10;
+        miniChallengeProgress = 0;
+        miniChallengeSuccess = false;
+        statusText.textContent = `Mini-Challenge: Clean ${miniChallengeTarget} junk in ${miniChallengeTime}s`;
+    }
+
+    function setMode(m) {
+        mode = m;
+        timeAttack = m === 'time';
+        survivalMode = m === 'survival';
+        precisionMode = m === 'precision';
+        chaosMode = m === 'chaos';
+        hardcore = m === 'hardcore';
+        bossRush = m === 'boss';
+        mirrorMode = m === 'mirror';
+        gravityMode = m === 'gravity';
+        safeMode = m === 'safe';
+        miniChallengeActive = m === 'mini';
+        oneLife = hardcore;
+        gravityFlip = gravityMode;
+        mirrorControls = mirrorMode;
+        difficulty = (m === 'time' || m === 'mini') ? 'Normal' :
+                     (m === 'hardcore' ? 'Hard' :
+                     (m === 'safe' ? 'Easy' : 'Normal'));
+        modeName =
+            m === 'time' ? 'Time Attack' :
+            m === 'survival' ? 'Survival' :
+            m === 'precision' ? 'Precision Mode' :
+            m === 'chaos' ? 'Chaos Mode' :
+            m === 'hardcore' ? 'One-Life Hardcore' :
+            m === 'mini' ? 'Mini-Challenges' :
+            m === 'boss' ? 'Boss Rush' :
+            m === 'mirror' ? 'Mirror Mode' :
+            m === 'gravity' ? 'Gravity Flip' :
+            m === 'safe' ? 'Safe Mode' : 'Unknown';
+        statusText.textContent = `Mode: ${modeName} • Difficulty: ${difficulty}`;
+        resetGame();
+        gameRunning = true;
+        paused = false;
+        modeSelect.style.display = 'none';
+        summaryPanel.style.display = 'none';
+    }
+
+    function updateUI() {
+        scoreValue.textContent = score;
+        comboValue.textContent = combo.toFixed(0);
+        livesValue.textContent = safeMode ? '∞' : lives;
+        timerValue.textContent = timeLeft === Infinity ? '∞' : Math.max(0, timeLeft).toFixed(1);
+        highValue.textContent = highscore;
+        multiplierBar.style.width = clamp(multiplierProgress, 0, 1) * 100 + '%';
+        const spawnRatio = 1 - (spawnInterval - minSpawnInterval) / (maxSpawnInterval - minSpawnInterval);
+        spawnBar.style.width = clamp(spawnRatio, 0, 1) * 100 + '%';
+    }
+
+    function spawnJunk(stormCount) {
+        const count = stormCount || 1;
+        for (let i = 0; i < count; i++) {
+            const isBoss = bossRush || (Math.random() < 0.05 && !bossRush);
+            const r = isBoss ? rand(28, 40) : rand(12, 24);
+            const x = rand(r, width - r);
+            const y = gravityFlip ? height + r + rand(0, 40) : -r - rand(0, 40);
+            const baseSpeed = difficulty === 'Easy' ? rand(60, 110) : difficulty === 'Hard' ? rand(120, 190) : rand(90, 150);
+            const vy = baseSpeed * (gravityFlip ? -1 : 1);
+            const vx = rand(-40, 40);
+            const shape = ['circle', 'square', 'triangle'][randInt(0, 2)];
+            const hue = randInt(0, 360);
+            let color = `hsl(${hue},70%,60%)`;
+            let points = 1;
+            let isGolden = false;
+            let isRed = false;
+
+            const roll = Math.random();
+            if (!isBoss && roll < 0.08) {
+                isGolden = true;
+                points = 5;
+                color = 'gold';
+            } else if (!isBoss && roll < 0.14) {
+                isRed = true;
+                points = -2;
+                color = '#f97373';
+            }
+
+            const opts = {
+                x, y, r, vx, vy,
+                color, shape, points,
+                isGolden, isRed, isBoss,
+                hp: isBoss ? randInt(8, 14) : 1,
+                splitOnDeath: !isBoss && Math.random() < 0.25,
+                sideways: Math.random() < 0.25,
+                teleporting: Math.random() < (chaosMode ? 0.25 : 0.08),
+                rotating: Math.random() < 0.4,
+                shrinkOverTime: Math.random() < 0.25,
+                speedUp: true,
+                bouncing: Math.random() < 0.25,
+                zigzag: Math.random() < 0.25,
+                invisible: Math.random() < 0.15,
+                fade: Math.random() < 0.25,
+                mergeable: Math.random() < 0.25,
+                wave: Math.random() < 0.25,
+                sizeChange: Math.random() < 0.25
+            };
+            if (bossRush) {
+                opts.isBoss = true;
+                opts.hp = randInt(10, 18);
+                opts.r = rand(30, 45);
+                opts.color = '#facc15';
+                opts.shape = 'square';
+            }
+            junkList.push(new Junk(opts));
+        }
+    }
+
+    function clearAllJunk() {
+        if (!junkList.length) return;
+        junkList.forEach(j => createExplosion(j.x, j.y, j.color));
+        junkList = [];
+        flashScreenTimer = 0.25;
+        playBeep(880, 0.2, 'square');
+    }
+
+    function createExplosion(x, y, color) {
+        for (let i = 0; i < 24; i++) {
+            particles.push(new Particle(x, y, color));
+        }
+    }
+
+    function addScore(amount, x, y) {
+        score += amount * multiplier;
+        if (score < 0) score = 0;
+        const text = (amount > 0 ? '+' : '') + (amount * multiplier);
+        const color = amount > 0 ? '#bbf7d0' : '#fecaca';
+        popups.push(new PopupText(x, y, text, color));
+    }
+
+    function handleJunkHit(junk, isPowerHit) {
+        let basePoints = junk.points;
+        if (junk.isGolden) basePoints = 5;
+        if (junk.isRed) basePoints = -3;
+        if (isPowerHit) basePoints *= 2;
+        addScore(basePoints, junk.x, junk.y);
+        combo += 1;
+        streak += 1;
+        successfulClicks += 1;
+        multiplierProgress += 0.08;
+        if (multiplierProgress >= 1) {
+            multiplierProgress = 0;
+            multiplier = Math.min(multiplier + 0.5, 5);
+        }
+        if (streak >= 100 && !streakRewardGiven) {
+            streakRewardGiven = true;
+            multiplier = Math.min(multiplier + 2, 6);
+            flashScreenTimer = 0.35;
+            playBeep(1200, 0.25, 'triangle');
+            popups.push(new PopupText(width / 2, height * 0.3, 'STREAK BONUS!', '#facc15'));
+        }
+
+        if (miniChallengeActive && !miniChallengeSuccess) {
+            miniChallengeProgress += 1;
+            if (miniChallengeProgress >= miniChallengeTarget) {
+                miniChallengeSuccess = true;
+                popups.push(new PopupText(width / 2, height * 0.4, 'CHALLENGE COMPLETE!', '#4ade80'));
+                multiplier = Math.min(multiplier + 1, 6);
+            }
+        }
+
+        if (junk.isBoss) {
+            junk.hp -= isPowerHit ? 3 : 1;
+            if (junk.hp <= 0) {
+                createExplosion(junk.x, junk.y, junk.color);
+                junk.markedForRemoval = true;
+            }
+        } else {
+            createExplosion(junk.x, junk.y, junk.color);
+            if (junk.splitOnDeath && junk.r > 12) {
+                const childCount = randInt(2, 3);
+                for (let i = 0; i < childCount; i++) {
+                    const r = junk.r * 0.6;
+                    const vx = rand(-80, 80);
+                    const vy = rand(60, 140) * (gravityFlip ? -1 : 1);
+                    const color = junk.color;
+                    const shape = ['circle', 'square', 'triangle'][randInt(0, 2)];
+                    junkList.push(new Junk({
+                        x: junk.x + rand(-10, 10),
+                        y: junk.y + rand(-10, 10),
+                        r, vx, vy, color, shape,
+                        points: 1,
+                        isGolden: false,
+                        isRed: false,
+                        isBoss: false,
+                        hp: 1,
+                        splitOnDeath: false,
+                        sideways: Math.random() < 0.3,
+                        teleporting: false,
+                        rotating: Math.random() < 0.5,
+                        shrinkOverTime: Math.random() < 0.3,
+                        speedUp: true,
+                        bouncing: Math.random() < 0.3,
+                        zigzag: Math.random() < 0.3,
+                        invisible: false,
+                        fade: Math.random() < 0.3,
+                        mergeable: Math.random() < 0.3,
+                        wave: Math.random() < 0.3,
+                        sizeChange: Math.random() < 0.3
+                    }));
+                }
+            }
+            junk.markedForRemoval = true;
+        }
+    }
+
+    function handleClick(x, y) {
+        totalClicks += 1;
+        let clickX = x;
+        if (mirrorControls) {
+            clickX = width - x;
+        }
+        let hit = false;
+        let powerHit = false;
+
+        const now = performance.now();
+        const dtClick = now - lastClickTime;
+        const distClick = Math.hypot(clickX - lastClickPos.x, y - lastClickPos.y);
+        if (dtClick < doubleTapThreshold && distClick < doubleTapDistance) {
+            powerHit = true;
+        }
+        lastClickTime = now;
+        lastClickPos.x = clickX;
+        lastClickPos.y = y;
+
+        for (let i = junkList.length - 1; i >= 0; i--) {
+            const j = junkList[i];
+            if (j.containsPoint(clickX, y)) {
+                hit = true;
+                handleJunkHit(j, powerHit);
+                playBeep(powerHit ? 900 : 600, 0.08, 'square');
+                break;
+            }
+        }
+
+        if (!hit) {
+            combo = 0;
+            multiplier = 1;
+            multiplierProgress = 0;
+            if (precisionMode && !safeMode) {
+                lives -= 1;
+                if (lives < 0) lives = 0;
+                screenShakeTimer = 0.25;
+                screenShakeMagnitude = 10;
+                if (lives <= 0 && !safeMode) {
+                    endGame();
+                }
+            }
+        }
+    }
+
+    function update(dt) {
+        if (!gameRunning || paused) return;
+
+        elapsedTime += dt;
+        if (timeAttack || miniChallengeActive) {
+            timeLeft -= dt;
+            if (timeLeft <= 0 && !safeMode) {
+                timeLeft = 0;
+                endGame();
+            }
+        }
+
+        if (miniChallengeActive && !miniChallengeSuccess) {
+            miniChallengeTime -= dt;
+            if (miniChallengeTime <= 0 && !safeMode) {
+                miniChallengeTime = 0;
+                endGame();
+            }
+        }
+
+        speedLevelTimer += dt;
+        if (speedLevelTimer >= 10) {
+            speedLevelTimer = 0;
+            globalSpeedMultiplier *= 1.1;
+            spawnInterval = Math.max(minSpawnInterval, spawnInterval - 60);
+        }
+
+        spawnTimer += dt * 1000;
+        if (spawnTimer >= spawnInterval) {
+            spawnTimer = 0;
+            let storm = false;
+            if (chaosMode && Math.random() < 0.25) {
+                storm = true;
+            } else if (survivalMode && Math.random() < 0.15) {
+                storm = true;
+            }
+            if (storm) {
+                spawnJunk(20);
+                waveIncomingTimer = 1.2;
+                playBeep(500, 0.2, 'sawtooth');
+            } else {
+                spawnJunk(1);
+            }
+        }
+
+        if (freezeTimer > 0) freezeTimer -= dt;
+        if (slowMotionTimer > 0) slowMotionTimer -= dt;
+        if (shieldTimer > 0) shieldTimer -= dt;
+        if (magnetTimer > 0) magnetTimer -= dt;
+        if (flashScreenTimer > 0) flashScreenTimer -= dt;
+        if (screenShakeTimer > 0) screenShakeTimer -= dt;
+        if (waveIncomingTimer > 0) waveIncomingTimer -= dt;
+        if (warningTimer > 0) warningTimer -= dt;
+        if (cleanBeamActive) {
+            cleanBeamTimer -= dt;
+            if (cleanBeamTimer <= 0) {
+                cleanBeamActive = false;
+            } else {
+                for (let i = 0; i < junkList.length; i++) {
+                    const j = junkList[i];
+                    if (Math.abs(j.x - cleanBeamX) < j.r * 1.2) {
+                        handleJunkHit(j, true);
+                    }
+                }
+            }
+        }
+
+        let nearBottom = false;
+        for (let i = 0; i < junkList.length; i++) {
+            const j = junkList[i];
+            j.update(dt);
+            if (!gravityFlip && j.y + j.r > height * 0.85) nearBottom = true;
+            if (gravityFlip && j.y - j.r < height * 0.15) nearBottom = true;
+        }
+        if (nearBottom) {
+            warningTimer = 0.2;
+        }
+
+        // Merge junk
+        for (let i = 0; i < junkList.length; i++) {
+            const a = junkList[i];
+            if (!a.mergeable || a.markedForRemoval) continue;
+            for (let j = i + 1; j < junkList.length; j++) {
+                const b = junkList[j];
+                if (!b.mergeable || b.markedForRemoval) continue;
+                const dx = a.x - b.x;
+                const dy = a.y - b.y;
+                const dist = Math.hypot(dx, dy);
+                if (dist < a.r + b.r) {
+                    const area = Math.PI * a.r * a.r + Math.PI * b.r * b.r;
+                    const newR = Math.sqrt(area / Math.PI);
+                    a.r = newR;
+                    a.baseR = newR;
+                    a.points += b.points;
+                    b.markedForRemoval = true;
+                }
+            }
+        }
+
+        junkList = junkList.filter(j => !j.markedForRemoval);
+
+        particles.forEach(p => p.update(dt));
+        particles = particles.filter(p => p.life > 0);
+
+        popups.forEach(p => p.update(dt));
+        popups = popups.filter(p => p.life > 0);
+
+        if (warningTimer > 0) {
+            warningFlash.style.opacity = '1';
+        } else {
+            warningFlash.style.opacity = '0';
+        }
+
+        updateUI();
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, width, height);
+
+        if (screenShakeTimer > 0) {
+            const t = screenShakeTimer / 0.25;
+            const mag = screenShakeMagnitude * t;
+            const ox = rand(-mag, mag);
+            const oy = rand(-mag, mag);
+            ctx.save();
+            ctx.translate(ox, oy);
+        }
+
+        // Background subtle grid
+        ctx.save();
+        ctx.strokeStyle = 'rgba(15,23,42,0.7)';
+        ctx.lineWidth = 1;
+        const gridSize = 40;
+        for (let x = 0; x < width; x += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+        }
+        for (let y = 0; y < height; y += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        particles.forEach(p => p.draw(ctx));
+        junkList.forEach(j => j.draw(ctx));
+        popups.forEach(p => p.draw(ctx));
+
+        if (cleanBeamActive) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(96,165,250,0.9)';
+            ctx.lineWidth = 6;
+            ctx.shadowColor = 'rgba(59,130,246,0.9)';
+            ctx.shadowBlur = 18;
+            ctx.beginPath();
+            ctx.moveTo(cleanBeamX, 0);
+            ctx.lineTo(cleanBeamX, height);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        if (shieldTimer > 0) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(52,211,153,0.7)';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(width - 40, 40, 20, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        if (flashScreenTimer > 0) {
+            const alpha = clamp(flashScreenTimer / 0.35, 0, 1);
+            ctx.save();
+            ctx.fillStyle = `rgba(248,250,252,${alpha * 0.7})`;
+            ctx.fillRect(0, 0, width, height);
+            ctx.restore();
+        }
+
+        if (screenShakeTimer > 0) {
+            ctx.restore();
+        }
+
+        if (waveIncomingTimer > 0) {
+            waveText.style.opacity = '1';
+        } else {
+            waveText.style.opacity = '0';
+        }
+
+        if (!gameRunning && !modeSelectIsVisible() && !summaryPanelIsVisible()) {
+            ctx.save();
+            ctx.fillStyle = 'rgba(15,23,42,0.8)';
+            ctx.fillRect(0, 0, width, height);
+            ctx.fillStyle = '#e5e7eb';
+            ctx.font = 'bold 24px system-ui';
+            ctx.textAlign = 'center';
+            ctx.fillText('Paused', width / 2, height / 2);
+            ctx.restore();
+        }
+    }
+
+    function modeSelectIsVisible() {
+        return modeSelect.style.display !== 'none';
+    }
+    function summaryPanelIsVisible() {
+        return summaryPanel.style.display !== 'none';
+    }
+
+    function endGame() {
+        gameRunning = false;
+        paused = false;
+        const runTime = elapsedTime.toFixed(1);
+        const accuracy = totalClicks > 0 ? (successfulClicks / totalClicks * 100).toFixed(1) : '0.0';
+        if (score > highscore) {
+            highscore = score;
+            localStorage.setItem(highscoreKey, String(highscore));
+        }
+        sumMode.textContent = modeName;
+        sumScore.textContent = score;
+        sumBest.textContent = highscore;
+        sumTime.textContent = runTime + 's';
+        sumClicks.textContent = totalClicks;
+        sumAccuracy.textContent = accuracy + '%';
+        summaryPanel.style.display = 'flex';
+    }
+
+    function gameLoop(timestamp) {
+        const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+        lastTime = timestamp;
+        update(dt);
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+
+    // Input handling
+    function getCanvasPos(evt) {
+        const rect = canvas.getBoundingClientRect();
+        let clientX, clientY;
+        if (evt.touches && evt.touches.length > 0) {
+            clientX = evt.touches[0].clientX;
+            clientY = evt.touches[0].clientY;
+        } else {
+            clientX = evt.clientX;
+            clientY = evt.clientY;
+        }
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+        pointerDown = true;
+        pointerDownTime = performance.now();
+        const pos = getCanvasPos(e);
+        pointerPos = pos;
+    });
+    canvas.addEventListener('touchstart', (e) => {
+        pointerDown = true;
+        pointerDownTime = performance.now();
+        const pos = getCanvasPos(e);
+        pointerPos = pos;
+    }, { passive: true });
+
+    canvas.addEventListener('mousemove', (e) => {
+        const pos = getCanvasPos(e);
+        pointerPos = pos;
+    });
+    canvas.addEventListener('touchmove', (e) => {
+        const pos = getCanvasPos(e);
+        pointerPos = pos;
+    }, { passive: true });
+
+    function endPointer(e) {
+        const pos = getCanvasPos(e);
+        pointerPos = pos;
+        const now = performance.now();
+        const held = now - pointerDownTime;
+        if (held > 400) {
+            cleanBeamActive = true;
+            cleanBeamX = mirrorControls ? width - pos.x : pos.x;
+            cleanBeamTimer = 0.5;
+            playBeep(700, 0.2, 'triangle');
+        } else {
+            handleClick(pos.x, pos.y);
+        }
+        pointerDown = false;
+    }
+
+    canvas.addEventListener('mouseup', endPointer);
+    canvas.addEventListener('mouseleave', () => { pointerDown = false; });
+    canvas.addEventListener('touchend', (e) => {
+        endPointer(e.changedTouches[0] || e);
+    });
+
+    pauseBtn.addEventListener('click', () => {
+        if (!gameRunning) return;
+        paused = !paused;
+        pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+    });
+
+    soundBtn.addEventListener('click', () => {
+        audioEnabled = !audioEnabled;
+        soundBtn.textContent = audioEnabled ? 'Sound: On' : 'Sound: Off';
+        if (audioEnabled) {
+            initAudio();
+            playBeep(600, 0.08, 'square');
+        }
+    });
+
+    modeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const m = btn.getAttribute('data-mode');
+            setMode(m);
+        });
+    });
+
+    summaryMenuBtn.addEventListener('click', () => {
+        summaryPanel.style.display = 'none';
+        modeSelect.style.display = 'flex';
+    });
+    summaryRetryBtn.addEventListener('click', () => {
+        summaryPanel.style.display = 'none';
+        resetGame();
+        gameRunning = true;
+        paused = false;
+    });
+
+    // Keyboard shortcuts for power-ups
+    window.addEventListener('keydown', (e) => {
+        if (!gameRunning) return;
+        if (e.key === 'p' || e.key === 'P') {
+            paused = !paused;
+            pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+        }
+        if (e.key === '1') {
+            clearAllJunk();
+        }
+        if (e.key === '2') {
+            slowMotionTimer = 4;
+            flashScreenTimer = 0.2;
+            playBeep(300, 0.2, 'sine');
+        }
+        if (e.key === '3') {
+            shieldTimer = 6;
+            flashScreenTimer = 0.2;
+            playBeep(500, 0.2, 'triangle');
+        }
+        if (e.key === '4') {
+            freezeTimer = 3;
+            flashScreenTimer = 0.2;
+            playBeep(250, 0.2, 'square');
+        }
+        if (e.key === '5') {
+            magnetTimer = 5;
+            flashScreenTimer = 0.2;
+            playBeep(650, 0.2, 'sine');
+        }
+    });
+
+    // Initial text for power-ups
+    statusText.textContent = 'Select a mode to begin. Keys 1–5: Power-ups (Clear, Slow, Shield, Freeze, Magnet).';
+
+    lastTime = performance.now();
+    requestAnimationFrame(gameLoop);
+})();
+</script>
+</body>
+</html>
