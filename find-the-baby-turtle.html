@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find the Baby Turtle!</title>
+    <style>
+        /* ===== GLOBAL STYLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', 'Comic Sans MS', sans-serif;
+            background: linear-gradient(135deg, #1e90ff 0%, #00bfff 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* ===== MAIN CONTAINER ===== */
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: linear-gradient(to bottom, #87CEEB, #E0FFFF);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.7);
+        }
+
+        .game-text {
+            color: #34495e;
+            font-size: 1.3em;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        /* ===== INTRODUCTION SCREEN ===== */
+        #introScreen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 500px;
+        }
+
+        .mommy-turtle-intro {
+            font-size: 5em;
+            margin: 20px 0;
+            animation: bobbing 3s ease-in-out infinite;
+        }
+
+        @keyframes bobbing {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .intro-message {
+            font-size: 1.5em;
+            color: #2c3e50;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .start-button {
+            background: linear-gradient(135deg, #FF6B6B, #FFD93D);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 1.5em;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 30px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .start-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .start-button:active {
+            transform: scale(0.95);
+        }
+
+        /* ===== GAME SCREEN ===== */
+        #gameScreen {
+            display: none;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .clues-counter {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #2c3e50;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 10px 20px;
+            border-radius: 20px;
+        }
+
+        .current-location {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #2c3e50;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 10px 20px;
+            border-radius: 20px;
+        }
+
+        /* ===== GAME AREAS ===== */
+        .game-area {
+            min-height: 400px;
+            position: relative;
+            margin: 30px 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            display: none;
+        }
+
+        .game-area.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .area-title {
+            font-size: 2em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .clickable-object {
+            display: inline-block;
+            margin: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .clickable-object:hover {
+            transform: scale(1.15) rotate(5deg);
+            filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.2));
+        }
+
+        .clickable-object:active {
+            transform: scale(0.95);
+        }
+
+        .hint-message {
+            background: rgba(255, 255, 200, 0.9);
+            border: 3px solid #FFD700;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 1.2em;
+            color: #2c3e50;
+            font-weight: bold;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== NAVIGATION ===== */
+        .navigation {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-button {
+            background: linear-gradient(135deg, #6BCB77, #4D96FF);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.1em;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-button:active {
+            transform: translateY(-1px);
+        }
+
+        .nav-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ===== ENDING SCREEN ===== */
+        #endingScreen {
+            display: none;
+            text-align: center;
+            min-height: 500px;
+            position: relative;
+        }
+
+        .celebration-emoji {
+            font-size: 6em;
+            animation: jump 0.5s ease-in-out infinite;
+        }
+
+        @keyframes jump {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .celebration-text {
+            font-size: 2em;
+            color: #2c3e50;
+            font-weight: bold;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .confetti {
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .play-again-button {
+            background: linear-gradient(135deg, #FFD93D, #FF6B6B);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 1.5em;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 30px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .play-again-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* ===== SVG GRAPHICS ===== */
+        svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .game-text {
+                font-size: 1.1em;
+            }
+
+            .mommy-turtle-intro {
+                font-size: 4em;
+            }
+
+            .start-button, .play-again-button {
+                padding: 15px 30px;
+                font-size: 1.2em;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            .area-title {
+                font-size: 1.5em;
+            }
+
+            .game-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .mommy-turtle-intro {
+                font-size: 3em;
+            }
+
+            .intro-message {
+                font-size: 1.2em;
+            }
+
+            .container {
+                padding: 15px;
+                border-radius: 20px;
+            }
+        }
+
+        /* ===== ACCESSIBILITY ===== */
+        button {
+            min-width: 50px;
+            min-height: 50px;
+        }
+
+        button:focus {
+            outline: 3px solid #FFD700;
+            outline-offset: 2px;
+        }
+
+        .game-text, .hint-message {
+            line-height: 1.8;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== INTRODUCTION SCREEN ===== -->
+    <div class="container">
+        <div id="introScreen">
+            <h1>🐢 Find the Baby Turtle! 🐢</h1>
+            <div class="mommy-turtle-intro">🐢</div>
+            <div class="intro-message">
+                Oh no! My baby turtle is lost!
+            </div>
+            <div class="game-text">
+                Can you help me find them? <br>
+                Explore the ocean and look for clues!
+            </div>
+            <button class="start-button" onclick="startGame()">
+                START GAME
+            </button>
+        </div>
+
+        <!-- ===== GAME SCREEN ===== -->
+        <div id="gameScreen">
+            <h1>🐢 Find the Baby Turtle! 🐢</h1>
+
+            <div class="game-header">
+                <div class="clues-counter">Clues Found: <span id="clueCount">0</span>/5</div>
+                <div class="current-location" id="locationDisplay">Beach</div>
+            </div>
+
+            <!-- ===== BEACH AREA ===== -->
+            <div id="beach" class="game-area active">
+                <div class="area-title">🏖️ The Sandy Beach</div>
+                <div class="clickable-object" onclick="findClue('beach', 'shell')">🐚</div>
+                <div class="clickable-object" onclick="findClue('beach', 'sand')">🏜️</div>
+                <div class="clickable-object" onclick="findClue('beach', 'crab')">🦀</div>
+                <div class="hint-message" id="beachHint">
+                    👋 Click the objects on the beach to find clues!
+                </div>
+            </div>
+
+            <!-- ===== ROCK POOL AREA ===== -->
+            <div id="rockPool" class="game-area">
+                <div class="area-title">🪨 The Splashing Rock Pool</div>
+                <div class="clickable-object" onclick="findClue('rockPool', 'fish')">🐠</div>
+                <div class="clickable-object" onclick="findClue('rockPool', 'starfish')">⭐</div>
+                <div class="clickable-object" onclick="findClue('rockPool', 'seaweed')">🌿</div>
+                <div class="hint-message" id="rockPoolHint">
+                    💧 Click the creatures in the rock pool!
+                </div>
+            </div>
+
+            <!-- ===== CORAL REEF AREA ===== -->
+            <div id="coralReef" class="game-area">
+                <div class="area-title">🌊 The Colourful Coral Reef</div>
+                <div class="clickable-object" onclick="findClue('coralReef', 'coral')">🪸</div>
+                <div class="clickable-object" onclick="findClue('coralReef', 'dolphin')">🐬</div>
+                <div class="clickable-object" onclick="findClue('coralReef', 'octopus')">🐙</div>
+                <div class="hint-message" id="coralReefHint">
+                    🌈 Tap the animals near the coral!
+                </div>
+            </div>
+
+            <!-- ===== SEA GRASS AREA ===== -->
+            <div id="seaGrass" class="game-area">
+                <div class="area-title">🌾 The Waving Sea Grass</div>
+                <div class="clickable-object" onclick="findClue('seaGrass', 'seahorse')">🌊</div>
+                <div class="clickable-object" onclick="findClue('seaGrass', 'jellyfish')">🪼</div>
+                <div class="clickable-object" onclick="findClue('seaGrass', 'seaweed2')">🌿</div>
+                <div class="hint-message" id="seaGrassHint">
+                    🦑 Search among the sea grass for clues!
+                </div>
+            </div>
+
+            <!-- ===== DEEP OCEAN AREA ===== -->
+            <div id="deepOcean" class="game-area">
+                <div class="area-title">🌙 The Deep Dark Ocean</div>
+                <div class="clickable-object" onclick="findClue('deepOcean', 'whale')">🐋</div>
+                <div class="clickable-object" onclick="findClue('deepOcean', 'submarine')">🚢</div>
+                <div class="clickable-object" onclick="findClue('deepOcean', 'fish2')">🐟</div>
+                <div class="hint-message" id="deepOceanHint">
+                    🔍 Look carefully in the deep water!
+                </div>
+            </div>
+
+            <!-- ===== NAVIGATION ===== -->
+            <div class="navigation">
+                <button class="nav-button" onclick="changeArea('beach')" id="btn-beach">🏖️ Beach</button>
+                <button class="nav-button" onclick="changeArea('rockPool')" id="btn-rockPool">🪨 Rock Pool</button>
+                <button class="nav-button" onclick="changeArea('coralReef')" id="btn-coralReef">🌊 Coral Reef</button>
+                <button class="nav-button" onclick="changeArea('seaGrass')" id="btn-seaGrass">🌾 Sea Grass</button>
+                <button class="nav-button" onclick="changeArea('deepOcean')" id="btn-deepOcean">🌙 Deep Ocean</button>
+            </div>
+        </div>
+
+        <!-- ===== ENDING SCREEN ===== -->
+        <div id="endingScreen">
+            <h1>🐢 Hooray! 🐢</h1>
+            <div class="celebration-emoji">🎉</div>
+            <div class="celebration-text">
+                You found Baby Turtle!
+            </div>
+            <div class="game-text">
+                Look at the happy reunion! 👨‍👩‍👧
+            </div>
+
+            <!-- ===== FAMILY REUNION SVG ===== -->
+            <svg viewBox="0 0 400 200" style="max-height: 150px; margin: 20px auto;">
+                <!-- Mommy Turtle -->
+                <circle cx="80" cy="100" r="40" fill="#2D5016"/>
+                <circle cx="80" cy="100" r="35" fill="#4A7C2C"/>
+                <ellipse cx="70" cy="70" rx="8" ry="12" fill="#2D5016"/>
+                <ellipse cx="90" cy="70" rx="8" ry="12" fill="#2D5016"/>
+                <circle cx="65" cy="65" r="4" fill="#000"/>
+                <circle cx="95" cy="65" r="4" fill="#000"/>
+                <path d="M 80 130 Q 70 145 60 140" stroke="#2D5016" stroke-width="3" fill="none"/>
+                <path d="M 80 130 Q 90 145 100 140" stroke="#2D5016" stroke-width="3" fill="none"/>
+
+                <!-- Baby Turtle -->
+                <circle cx="200" cy="100" r="25" fill="#7FBF7F"/>
+                <circle cx="200" cy="100" r="22" fill="#9FDF9F"/>
+                <ellipse cx="192" cy="85" rx="5" ry="8" fill="#7FBF7F"/>
+                <ellipse cx="208" cy="85" rx="5" ry="8" fill="#7FBF7F"/>
+                <circle cx="190" cy="82" r="2" fill="#000"/>
+                <circle cx="210" cy="82" r="2" fill="#000"/>
+                <path d="M 200 112 Q 192 123 185 120" stroke="#7FBF7F" stroke-width="2" fill="none"/>
+                <path d="M 200 112 Q 208 123 215 120" stroke="#7FBF7F" stroke-width="2" fill="none"/>
+
+                <!-- Daddy Turtle -->
+                <circle cx="320" cy="100" r="35" fill="#1a3a1a"/>
+                <circle cx="320" cy="100" r="30" fill="#2D5016"/>
+                <ellipse cx="312" cy="72" rx="7" ry="11" fill="#1a3a1a"/>
+                <ellipse cx="328" cy="72" rx="7" ry="11" fill="#1a3a1a"/>
+                <circle cx="298" cy="68" r="3" fill="#000"/>
+                <circle cx="328" cy="68" r="3" fill="#000"/>
+                <path d="M 320 128 Q 310 140 300 136" stroke="#1a3a1a" stroke-width="2" fill="none"/>
+                <path d="M 320 128 Q 330 140 340 136" stroke="#1a3a1a" stroke-width="2" fill="none"/>
+
+                <!-- Hearts -->
+                <text x="150" y="40" font-size="24">❤️</text>
+                <text x="280" y="40" font-size="24">❤️</text>
+            </svg>
+
+            <div class="celebration-text">
+                Great job, helper! 🌟
+            </div>
+            <button class="play-again-button" onclick="playAgain()">
+                PLAY AGAIN
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== JAVASCRIPT GAME LOGIC ===== -->
+    <script>
+        // ===== GAME STATE =====
+        let gameState = {
+            currentArea: 'beach',
+            cluesFound: [],
+            totalCluesNeeded: 5,
+            areas: ['beach', 'rockPool', 'coralReef', 'seaGrass', 'deepOcean'],
+            clues: {
+                beach: { shell: false, sand: false, crab: false },
+                rockPool: { fish: false, starfish: false, seaweed: false },
+                coralReef: { coral: false, dolphin: false, octopus: false },
+                seaGrass: { seahorse: false, jellyfish: false, seaweed2: false },
+                deepOcean: { whale: false, submarine: false, fish2: false }
+            },
+            hints: {
+                beach: [
+                    '🐚 The shell heard Baby Turtle giggling!',
+                    '🦀 The crab says: Baby Turtle loves to play hide and seek!',
+                    '🏜️ The sand has tiny turtle footprints!'
+                ],
+                rockPool: [
+                    '🐠 The fish saw Baby Turtle swimming nearby!',
+                    '⭐ The starfish says: Keep looking, you\'re doing great!',
+                    '🌿 The seaweed moves when Baby Turtle swims by!'
+                ],
+                coralReef: [
+                    '🪸 The coral says: Baby Turtle loves bright colours!',
+                    '🐬 The dolphin is friendly just like Baby Turtle!',
+                    '🐙 The octopus says: You\'re getting close now!'
+                ],
+                seaGrass: [
+                    '🦑 I saw Baby Turtle hiding in the sea grass!',
+                    '🪼 The jellyfish says: Keep going, you\'re almost there!',
+                    '🌿 Baby Turtle loves playing in the sea grass!'
+                ],
+                deepOcean: [
+                    '🐋 The whale says: Baby Turtle is very near now!',
+                    '🚢 A ship passed by where Baby Turtle was playing!',
+                    '🐟 The fish says: Baby Turtle must be here somewhere!'
+                ]
+            }
+        };
+
+        // ===== START GAME FUNCTION =====
+        function startGame() {
+            document.getElementById('introScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            playSound('start');
+        }
+
+        // ===== FIND CLUE FUNCTION =====
+        function findClue(area, clueType) {
+            // Check if this clue has already been found
+            if (gameState.clues[area][clueType]) {
+                return;
+            }
+
+            // Mark clue as found
+            gameState.clues[area][clueType] = true;
+            gameState.cluesFound.push(`${area}-${clueType}`);
+
+            // Update clue counter
+            document.getElementById('clueCount').textContent = gameState.cluesFound.length;
+
+            // Play sound
+            playSound('clue');
+
+            // Show random hint
+            const hints = gameState.hints[area];
+            const randomHint = hints[Math.floor(Math.random() * hints.length)];
+            document.getElementById(area + 'Hint').textContent = randomHint;
+
+            // Check if game is complete
+            if (gameState.cluesFound.length >= gameState.totalCluesNeeded) {
+                setTimeout(endGame, 1000);
+            }
+        }
+
+        // ===== CHANGE AREA FUNCTION =====
+        function changeArea(newArea) {
+            // Hide all areas
+            document.querySelectorAll('.game-area').forEach(area => {
+                area.classList.remove('active');
+            });
+
+            // Show new area
+            document.getElementById(newArea).classList.add('active');
+            gameState.currentArea = newArea;
+
+            // Update location display
+            const areaNames = {
+                beach: '🏖️ Beach',
+                rockPool: '🪨 Rock Pool',
+                coralReef: '🌊 Coral Reef',
+                seaGrass: '🌾 Sea Grass',
+                deepOcean: '🌙 Deep Ocean'
+            };
+            document.getElementById('locationDisplay').textContent = areaNames[newArea];
+
+            // Highlight current button
+            gameState.areas.forEach(area => {
+                document.getElementById('btn-' + area).style.opacity = area === newArea ? '1' : '0.6';
+            });
+
+            playSound('move');
+        }
+
+        // ===== END GAME FUNCTION =====
+        function endGame() {
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('endingScreen').style.display = 'block';
+            playSound('win');
+            createConfetti();
+        }
+
+        // ===== PLAY AGAIN FUNCTION =====
+        function playAgain() {
+            // Reset game state
+            gameState.cluesFound = [];
+            gameState.clues = {
+                beach: { shell: false, sand: false, crab: false },
+                rockPool: { fish: false, starfish: false, seaweed: false },
+                coralReef: { coral: false, dolphin: false, octopus: false },
+                seaGrass: { seahorse: false, jellyfish: false, seaweed2: false },
+                deepOcean: { whale: false, submarine: false, fish2: false }
+            };
+
+            // Reset UI
+            document.getElementById('clueCount').textContent = '0';
+            document.getElementById('endingScreen').style.display = 'none';
+            document.getElementById('introScreen').style.display = 'flex';
+            document.getElementById('gameScreen').style.display = 'none';
+
+            // Remove confetti
+            document.querySelectorAll('.confetti').forEach(el => el.remove());
+
+            playSound('start');
+        }
+
+        // ===== SOUND EFFECTS (using Web Audio API) =====
+        function playSound(type) {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                let frequency, duration;
+                
+                switch(type) {
+                    case 'clue':
+                        frequency = 800;
+                        duration = 0.1;
+                        break;
+                    case 'start':
+                        frequency = 523.25;
+                        duration = 0.2;
+                        break;
+                    case 'move':
+                        frequency = 392;
+                        duration = 0.15;
+                        break;
+                    case 'win':
+                        frequency = 1046.5;
+                        duration = 0.3;
+                        break;
+                    default:
+                        frequency = 400;
+                        duration = 0.1;
+                }
+
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration);
+            } catch (e) {
+                // Audio context not available in this environment
+            }
+        }
+
+        // ===== CONFETTI ANIMATION =====
+        function createConfetti() {
+            const colors = ['🎉', '⭐', '🌟', '✨', '💫', '🎊'];
+            const container = document.getElementById('endingScreen');
+            
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.textContent = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.top = '-10px';
+                confetti.style.fontSize = (Math.random() * 20 + 15) + 'px';
+                confetti.style.opacity = '1';
+                
+                container.appendChild(confetti);
+                
+                // Animate confetti falling
+                let top = -10;
+                let left = parseFloat(confetti.style.left);
+                const speed = Math.random() * 2 + 1;
+                const drift = (Math.random() - 0.5) * 2;
+                
+                const animate = () => {
+                    top += speed;
+                    left += drift;
+                    confetti.style.top = top + 'px';
+                    confetti.style.left = left + '%';
+                    confetti.style.opacity = 1 - (top / 500);
+                    confetti.style.transform = `rotate(${top * 5}deg)`;
+                    
+                    if (top < 500) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        confetti.remove();
+                    }
+                };
+                animate();
+            }
+        }
+
+        // ===== INITIALIZE GAME =====
+        window.addEventListener('load', function() {
+            // Set initial button opacity
+            document.getElementById('btn-beach').style.opacity = '1';
+            gameState.areas.forEach(area => {
+                if (area !== 'beach') {
+                    document.getElementById('btn-' + area).style.opacity = '0.6';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
